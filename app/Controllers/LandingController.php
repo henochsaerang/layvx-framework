@@ -2,12 +2,13 @@
 
 namespace App\Controllers;
 
-use App\Models\Food; // Import Model Food
+use App\Core\Request;
+use App\Core\Response;
 
 class LandingController {
 
-    public function index($request) {
+    public function index() {
        
-        render('index');
+        return Response::view('index');
     }
 }

@@ -1,5 +1,5 @@
 <?php
 
-get('/', ['LandingController', 'index'])->name('home');
+use App\Core\Route;
 
-
+Route::get('/', ['LandingController', 'index']);

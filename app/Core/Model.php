@@ -5,7 +5,6 @@ namespace App\Core;
 use PDO;
 
 class Model {
-    protected static $conn;
     protected static $table; // To be defined by child classes (e.g., 'users')
     protected static $primaryKey = 'id'; // Default primary key name
     protected static $fillable = []; // Kolom yang dapat diisi secara massal (mass-assignable)
@@ -13,6 +12,93 @@ class Model {
     // Stores the relationship definitions for each model
     protected static $relations = [];
     protected static $initializedRelations = false; // Flag to ensure relations are defined only once
+
+    /**
+     * The model's attributes.
+     * @var array
+     */
+    public $attributes = [];
+
+    /**
+     * The model's loaded relationships.
+     * @var array
+     */
+    public $relationships = [];
+
+
+    public function __construct(array $attributes = []) {
+        $this->fill($attributes);
+    }
+    
+    public function fill(array $attributes) {
+        foreach ($attributes as $key => $value) {
+            $this->setAttribute($key, $value);
+        }
+    }
+
+    public function getAttribute($key) {
+        // First, check for an accessor method
+        $accessorMethod = 'get' . $this->studly($key) . 'Attribute';
+        if (method_exists($this, $accessorMethod)) {
+            // Call the accessor with the raw attribute value
+            return $this->{$accessorMethod}($this->attributes[$key] ?? null);
+        }
+
+        // If no accessor, check if the key exists as a raw attribute
+        if (array_key_exists($key, $this->attributes)) {
+            return $this->attributes[$key];
+        }
+
+        // If not an attribute, check if it's a loaded relationship
+        if (array_key_exists($key, $this->relationships)) {
+            return $this->relationships[$key];
+        }
+        
+        return null;
+    }
+
+    public function setAttribute($key, $value) {
+        // First, check for a mutator method
+        $mutatorMethod = 'set' . $this->studly($key) . 'Attribute';
+        if (method_exists($this, $mutatorMethod)) {
+            // Call the mutator, which is responsible for setting the attribute
+            $this->{$mutatorMethod}($value);
+        } else {
+            // If no mutator, just set the raw attribute
+            $this->attributes[$key] = $value;
+        }
+    }
+
+    /**
+     * Convert a string to studly case.
+     *
+     * @param string $value
+     * @return string
+     */
+    private function studly($value) {
+        return str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $value)));
+    }
+
+    public function getAttributes() {
+        return $this->attributes;
+    }
+
+    public function __get($key) {
+        return $this->getAttribute($key);
+    }
+
+    public function __set($key, $value) {
+        $this->setAttribute($key, $value);
+    }
+
+    public function __isset($key) {
+        return isset($this->attributes[$key]) || isset($this->relationships[$key]);
+    }
+
+    public function __unset($key) {
+        unset($this->attributes[$key]);
+        unset($this->relationships[$key]);
+    }
 
     /**
      * Get the fillable columns for the current model.
@@ -51,7 +137,7 @@ class Model {
      */
     protected static function _defineHasMany(string $related, string $foreignKey = null, string $localKey = null): array {
         $relatedInstance = new $related(); // Instantiate to get metadata of related model
-        $foreignKey = $foreignKey ?? strtolower((new ReflectionClass(new static()))->getShortName()) . '_id'; // Default: current_model_id (e.g., user_id)
+        $foreignKey = $foreignKey ?? strtolower((new \ReflectionClass(new static()))->getShortName()) . '_id'; // Default: current_model_id (e.g., user_id)
         $localKey = $localKey ?? (new static())->getPrimaryKey(); // Default: parent_model_primary_key (e.g., id)
 
         return [
@@ -67,7 +153,7 @@ class Model {
      */
     protected static function _defineBelongsTo(string $related, string $foreignKey = null, string $ownerKey = null): array {
         $relatedInstance = new $related(); // Instantiate to get metadata of related model
-        $foreignKey = $foreignKey ?? strtolower((new ReflectionClass($relatedInstance))->getShortName()) . '_id'; // Default: related_model_id (e.g., course_id)
+        $foreignKey = $foreignKey ?? strtolower((new \ReflectionClass($relatedInstance))->getShortName()) . '_id'; // Default: related_model_id (e.g., course_id)
         $ownerKey = $ownerKey ?? $relatedInstance->getPrimaryKey(); // Default: related_model_primary_key (e.g., id)
 
         return [
@@ -93,6 +179,43 @@ class Model {
     }
 
     /**
+     * NEW: Public static helper for 'Banyak Ke Banyak' relationship definition.
+     */
+    public static function BanyakKeBanyak(string $name, string $related, string $pivotTable = null, string $foreignPivotKey = null, string $relatedPivotKey = null, string $parentKey = null, string $relatedKey = null) {
+        static::_addRelation($name, static::_defineBelongsToMany($related, $pivotTable, $foreignPivotKey, $relatedPivotKey, $parentKey, $relatedKey));
+    }
+
+    /**
+     * Internal helper to define a belongsToMany relationship.
+     */
+    protected static function _defineBelongsToMany(string $related, string $pivotTable = null, string $foreignPivotKey = null, string $relatedPivotKey = null, string $parentKey = null, string $relatedKey = null): array {
+        $parentInstance = new static();
+        $relatedInstance = new $related();
+
+        // Guess pivot table name by alphabetical order of model names
+        if (is_null($pivotTable)) {
+            $models = [strtolower((new \ReflectionClass($parentInstance))->getShortName()), strtolower((new \ReflectionClass($relatedInstance))->getShortName())];
+            sort($models);
+            $pivotTable = implode('_', $models);
+        }
+
+        // Guess the foreign keys on the pivot table
+        $foreignPivotKey = $foreignPivotKey ?? strtolower((new \ReflectionClass($parentInstance))->getShortName()) . '_id';
+        $relatedPivotKey = $relatedPivotKey ?? strtolower((new \ReflectionClass($relatedInstance))->getShortName()) . '_id';
+
+        return [
+            'type' => 'belongsToMany',
+            'related' => $related,
+            'pivotTable' => $pivotTable,
+            'foreignPivotKey' => $foreignPivotKey, // e.g., 'post_id'
+            'relatedPivotKey' => $relatedPivotKey, // e.g., 'tag_id'
+            'parentKey' => $parentKey ?? $parentInstance->getPrimaryKey(), // e.g., 'id' on posts table
+            'relatedKey' => $relatedKey ?? $relatedInstance->getPrimaryKey(), // e.g., 'id' on tags table
+        ];
+    }
+
+
+    /**
      * Get a relation definition by name.
      *
      * @param string $name
@@ -115,25 +238,13 @@ class Model {
         // static::BanyakKeSatu('user', User::class, 'user_id');
     }
 
-    public static function connect(): PDO { // Return type hint changed to PDO
-        if (!self::$conn) {
-            $config = require(__DIR__ . '/../../config/database.php');
-            
-            $dsn = "mysql:host={$config['host']};dbname={$config['db_name']};charset=utf8mb4";
-            try {
-                $pdo = new PDO(
-                    $dsn,
-                    $config['db_user'],
-                    $config['db_pass']
-                );
-                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC); // Fetch associative arrays by default
-                self::$conn = $pdo;
-            } catch (PDOException $e) {
-                throw new Exception("Koneksi Gagal: " . $e->getMessage());
-            }
-        }
-        return self::$conn;
+    /**
+     * Get the database connection from the service container.
+     *
+     * @return PDO
+     */
+    public static function connect(): PDO {
+        return app(PDO::class);
     }
 
     /**

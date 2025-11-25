@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Commands;
+
+use App\Core\Command;
+
+class MakeControllerCommand extends Command {
+    protected $signature = 'buat:controller';
+    protected $description = 'Membuat class Controller baru.';
+
+    public function handle(array $args = []) {
+        $controllerName = $args[0] ?? null;
+        if (empty($controllerName)) {
+            echo "Error: Please provide a name for the controller.\n";
+            echo "Usage: php layvx buat:controller <ControllerName>\n";
+            exit(1);
+        }
+
+        $controllerName = ucfirst($controllerName) . 'Controller'; // Ensure "Controller" suffix and PascalCase
+        
+        $basePath = __DIR__ . '/../../'; // From app/Commands to project root
+        $filepath = $basePath . 'app/Controllers/' . $controllerName . '.php';
+
+        if (file_exists($filepath)) {
+            echo "Error: Controller {$controllerName} already exists.\n";
+            exit(1);
+        }
+
+        $stub = <<<PHP
+<?php
+
+namespace App\Controllers;
+
+class {$controllerName} {
+    public function index() {
+        // Default method
+        echo "Hello from {$controllerName}!";
+    }
+}
+
+PHP;
+
+        if (file_put_contents($filepath, $stub) === false) {
+            echo "Error: Could not create controller file.\n";
+            exit(1);
+        }
+        echo "Controller created successfully: {$filepath}\n";
+    }
+}
+
