@@ -1,0 +1,337 @@
+<?php
+
+// File: layvx (Custom Console Runner with Migration & Model Creation)
+
+// --- BOOTSTRAPPING ---
+require_once __DIR__ . '/../app/Core/autoloader.php';
+require_once __DIR__ . '/../app/Core/Env.php';
+\App\Core\Env::load(__DIR__ . '/..');
+
+// Load helper functions which now include the Migration base class and Column builder
+require_once __DIR__ . '/../app/Core/helpers.php';
+
+// --- CONFIGURATION ---
+$db_config = require __DIR__ . '/../config/database.php';
+$migrations_path = __DIR__ . '/../database/tabel';
+$models_path = __DIR__ . '/../app/Models';
+$controllers_path = __DIR__ . '/../app/Controllers';
+
+// --- COMMAND HANDLING ---
+$argv = $_SERVER['argv'];
+$command = $argv[1] ?? null;
+
+// Main command router
+switch ($command) {
+    case 'serve':
+        run_serve_command();
+        break;
+    case 'buat:tabel':
+        run_make_migration_command($argv[2] ?? null, $migrations_path, 'create');
+        break;
+    case 'buat:hapus_tabel':
+        run_make_migration_command($argv[2] ?? null, $migrations_path, 'drop');
+        break;
+    case 'migrasi':
+        run_migrate_command($db_config, $migrations_path);
+        break;
+    case 'buat:model': // Changed from make:model
+        run_make_model_command($argv, $models_path, $migrations_path);
+        break;
+    case 'buat:controller':
+        run_make_controller_command($argv[2] ?? null, $controllers_path);
+        break;
+    case 'cache:clear':
+        run_cache_clear_command();
+        break;
+    case 'help':
+        print_help();
+        break;
+    default:
+        print_help();
+        break;
+}
+
+// --- COMMAND FUNCTIONS ---
+
+function run_serve_command() {
+    $host = '127.0.0.1';
+    $port = 8000;
+    $documentRoot = __DIR__ . '/../public'; // Adjusted path
+
+    echo "Starting LayVX (By Henoch A Saerang) development server...\n";
+    echo "Server running on: http://{$host}:{$port}\n";
+    echo "Press Ctrl+C to stop the server.\n";
+    passthru("php -S {$host}:{$port} -t \"{$documentRoot}\"");
+}
+
+function run_make_model_command($argv, $models_path, $migrations_path) {
+    $modelName = $argv[2] ?? null;
+    if (empty($modelName)) {
+        echo "Error: Please provide a name for the model.\n";
+        echo "Usage: php layvx buat:model <ModelName> [-t]\n"; // Changed from make:model
+        exit(1);
+    }
+
+    $modelName = ucfirst($modelName);
+    $filepath = "{$models_path}/{$modelName}.php";
+
+    if (file_exists($filepath)) {
+        echo "Error: Model {$modelName} already exists.\n";
+        exit(1);
+    }
+
+    $tableName = strtolower($modelName) . 's'; // Simple pluralization
+
+    $stub = <<<PHP
+<?php
+
+namespace App\Models;
+
+use App\Core\Model;
+
+class {$modelName} extends Model {
+    protected static \$table = '{$tableName}';
+}
+
+PHP;
+
+    if (file_put_contents($filepath, $stub) === false) {
+        echo "Error: Could not create model file.\n";
+        exit(1);
+    }
+    echo "Model created successfully: {$filepath}\n";
+
+    if (in_array('-t', $argv)) {
+        run_make_migration_command($tableName, $migrations_path, 'create');
+    }
+}
+
+function run_make_migration_command($name, $path, $type = 'create') {
+    if (empty($name)) {
+        echo "Error: Please provide a name for the table.\n";
+        echo "Usage: php layvx buat:tabel <nama_tabel>\n";
+        echo "Usage: php layvx buat:hapus_tabel <nama_tabel>\n";
+        exit(1);
+    }
+
+    $timestamp = date('Y_m_d_His');
+    $className = '';
+    $filename = '';
+    $up_stub_content = '';
+    $down_stub_content = '';
+
+    if ($type === 'create') {
+        $className = 'Create' . str_replace('_', '', ucwords($name, '_')) . 'Table';
+        $filename = "{$timestamp}_create_{$name}_table.php";
+        $up_stub_content = <<<PHP
+        \$this->createTable('{$name}', [
+            col('id')->id(), // Auto-incrementing primary key
+            // Add your table columns here, e.g.:
+            // col('column_name')->string(255)->notNullable()->unique(),
+            // col('description')->text()->nullable(),
+            // col('is_active')->integer()->default(0),
+            // col('status')->enum(['pending', 'approved', 'rejected'])->default('pending'),
+            // col('price')->decimal(10, 2)->notNullable(),
+            timestamps(), // created_at and updated_at
+        ]);
+PHP;
+        $down_stub_content = <<<PHP
+        \$this->dropTable('{$name}');
+PHP;
+    } elseif ($type === 'drop') {
+        $className = 'Drop' . str_replace('_', '', ucwords($name, '_')) . 'Table';
+        $filename = "{$timestamp}_drop_{$name}_table.php";
+        $up_stub_content = <<<PHP
+        \$this->dropTable('{$name}');
+PHP;
+        $down_stub_content = <<<PHP
+        // TODO: Define how to recreate the {$name} table here if you want to be able to rollback.
+        // For example:
+        // \$this->createTable('{$name}', [
+        //     col('id')->id(),
+        //     // ... other columns
+        //     timestamps(),
+        // ]);
+PHP;
+    } else {
+        echo "Error: Invalid migration type.\n";
+        exit(1);
+    }
+
+    $filepath = "{$path}/{$filename}";
+
+    // Full migration stub
+    $stub = <<<PHP
+<?php
+
+use App\Core\Migration;
+
+class {$className} extends Migration {
+    public function up() {
+        {$up_stub_content}
+    }
+
+    public function down() {
+        {$down_stub_content}
+    }
+}
+
+PHP;
+
+    if (file_put_contents($filepath, $stub) === false) {
+        echo "Error: Could not create migration file.\n";
+        exit(1);
+    }
+
+    echo "Created Migration: {$filename}\n";
+}
+
+function run_make_controller_command($controllerName, $path) {
+    if (empty($controllerName)) {
+        echo "Error: Please provide a name for the controller.\n";
+        echo "Usage: php layvx buat:controller <ControllerName>\n";
+        exit(1);
+    }
+
+    $controllerName = ucfirst($controllerName) . 'Controller'; // Ensure "Controller" suffix and PascalCase
+    $filepath = "{$path}/{$controllerName}.php";
+
+    if (file_exists($filepath)) {
+        echo "Error: Controller {$controllerName} already exists.\n";
+        exit(1);
+    }
+
+    $stub = <<<PHP
+<?php
+
+namespace App\Controllers;
+
+class {$controllerName} {
+    public function index() {
+        // Default method
+        echo "Hello from {$controllerName}!";
+    }
+}
+
+PHP;
+
+    if (file_put_contents($filepath, $stub) === false) {
+        echo "Error: Could not create controller file.\n";
+        exit(1);
+    }
+    echo "Controller created successfully: {$filepath}\n";
+}
+
+function run_cache_clear_command() {
+    $cache_path = __DIR__ . '/../storage/framework/views';
+    if (!is_dir($cache_path)) {
+        echo "Cache directory not found: {$cache_path}\n";
+        exit(1);
+    }
+
+    $files = glob($cache_path . '/*'); // Get all file names
+    $cleared_count = 0;
+    foreach($files as $file){ // iterate files
+        if(is_file($file)) {
+            if (unlink($file)) { // delete file
+                $cleared_count++;
+            } else {
+                echo "Failed to delete: {$file}\n";
+            }
+        }
+    }
+    echo "Cleared {$cleared_count} view cache files.\n";
+}
+
+function run_migrate_command($config, $path) {
+    try {
+        // Step 1: Connect to MySQL server without specifying a database
+        $pdo_server = new PDO(
+            "mysql:host={$config['host']}",
+            $config['db_user'],
+            $config['db_pass']
+        );
+        $pdo_server->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        // Step 2 & 3: Check if database exists and create if not
+        $stmt = $pdo_server->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{$config['db_name']}'");
+        if ($stmt->fetchColumn() === false) {
+            echo "Database '{$config['db_name']}' not found. Creating database...\n";
+            $pdo_server->exec("CREATE DATABASE `{$config['db_name']}`");
+            echo "Database '{$config['db_name']}' created successfully.\n";
+        }
+        $pdo_server = null; // Close the server connection
+
+        // Step 4: Connect to the specific database
+        $pdo = new PDO(
+            "mysql:host={$config['host']};dbname={$config['db_name']}",
+            $config['db_user'],
+            $config['db_pass']
+        );
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    } catch (PDOException $e) {
+        echo "Database connection or creation failed: " . $e->getMessage() . "\n";
+        exit(1);
+    }
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS migrations (id INT AUTO_INCREMENT PRIMARY KEY, migration VARCHAR(255) NOT NULL, batch INT NOT NULL)");
+    $ran_migrations_stmt = $pdo->query("SELECT migration FROM migrations");
+    $ran_migrations = $ran_migrations_stmt->fetchAll(PDO::FETCH_COLUMN);
+    $files = scandir($path);
+    $pending_migrations = [];
+    foreach ($files as $file) {
+        if (pathinfo($file, PATHINFO_EXTENSION) === 'php' && !in_array($file, $ran_migrations)) {
+            $pending_migrations[] = $file;
+        }
+    }
+
+    if (empty($pending_migrations)) {
+        echo "Nothing to migrate.\n";
+        return;
+    }
+
+    $batch = ($pdo->query("SELECT MAX(batch) FROM migrations")->fetchColumn() ?? 0) + 1;
+    foreach ($pending_migrations as $migration_file) {
+        echo "Migrating: {$migration_file}\n";
+        require_once "{$path}/{$migration_file}";
+        
+        $rawClassName = pathinfo($migration_file, PATHINFO_FILENAME);
+        // Remove the timestamp prefix, e.g., "2024_01_01_123456_create_users_table" -> "create_users_table"
+        $baseName = preg_replace('/^\d{4}_\d{2}_\d{2}_\d{6}_/', '', $rawClassName);
+
+        $parts = explode('_', $baseName);
+        $verb = array_shift($parts); // "create" or "drop"
+        array_pop($parts); // "table"
+
+        // "users" -> "Users" or "course_materials" -> "CourseMaterials"
+        $modelName = str_replace('_', '', ucwords(implode('_', $parts), '_'));
+
+        // "Create" or "Drop"
+        $classNamePrefix = ucfirst($verb);
+
+        $className = $classNamePrefix . $modelName . 'Table';
+
+        if (class_exists($className)) {
+            $migration = new $className($pdo); // Pass PDO to the constructor
+            $migration->up(); // Call up() without PDO, as it's now in the class property
+            $stmt = $pdo->prepare("INSERT INTO migrations (migration, batch) VALUES (?, ?)");
+            $stmt->execute([$migration_file, $batch]);
+            echo "Migrated:  {$migration_file}\n";
+        }
+    }
+    echo "Migration completed.\n";
+}
+
+function print_help() {
+    echo "LayVX (By Henoch A Saerang) Console Tool\n\n";
+    echo "Usage:\n";
+    echo "  .\\layvx <command>\n\n";
+    echo "Available commands:\n";
+    echo "  serve               Serve the application on the PHP development server\n";
+    echo "  buat:tabel <nama>   Membuat file migrasi untuk membuat tabel baru\n";
+    echo "  buat:hapus_tabel <nama> Membuat file migrasi untuk menghapus tabel\n";
+    echo "  migrasi             Menjalankan migrasi database yang tertunda\n";
+    echo "  buat:model <Nama>   Membuat class Model baru. Gunakan flag -t untuk membuat migrasi juga.\n";
+    echo "  buat:controller <Nama> Membuat class Controller baru.\n";
+    echo "  cache:clear         Menghapus semua file cache view.\n"; 
+}

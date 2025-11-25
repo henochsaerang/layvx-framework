@@ -1,0 +1,81 @@
+/* Mengatur background utama dan font default */
+body {
+    background-color: #f0f2f5;
+    font-family: 'Poppins', sans-serif; /* Anda bisa menambahkan link Google Fonts jika mau */
+}
+
+/* --- Style untuk Halaman Login --- */
+
+/* Mengatur background utama dan font default */
+body {
+    font-family: 'Poppins', sans-serif;
+}
+
+.login-bg {
+    /* Ganti URL ini dengan link gambar Anda */
+    background-image: linear-gradient(rgba(0, 81, 255, 0.5), rgba(0, 0, 0, 0.5)), url('../img/foto.jpeg');
+    background-size: cover; /* Agar gambar menutupi seluruh area */
+    background-position: center; /* Posisi gambar di tengah */
+    background-repeat: no-repeat; /* Jangan ulangi gambar */
+    min-height: 100vh;
+}
+
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-card {
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.95); /* Efek kaca agar tidak terlalu solid */
+    backdrop-filter: blur(5px); /* Efek blur pada background di belakang card */
+}
+
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-card {
+    border: none;
+    border-radius: 1rem; /* Sudut membulat seperti pada mockup */
+    overflow: hidden; /* Memastikan sudut gambar juga mengikuti card */
+}
+
+/* --- Style untuk Sidebar di Halaman Internal --- */
+
+.sidebar {
+    width: 280px;
+    background-color: #2c3e50; /* Warna biru tua sesuai mockup */
+    min-height: 100vh;
+}
+
+/* Style untuk link navigasi di sidebar */
+.sidebar .nav-link {
+    color: #ecf0f1; /* Warna teks putih keabuan */
+    font-size: 1rem;
+    margin-bottom: 5px;
+    border-radius: 0.5rem;
+}
+
+/* Style saat kursor diarahkan ke link */
+.sidebar .nav-link:hover {
+    background-color: #34495e;
+}
+
+/* Style untuk link yang sedang aktif (halaman yang sedang dibuka) */
+.sidebar .nav-link.active {
+    background-color: #3498db; /* Warna biru cerah untuk menandai halaman aktif */
+    font-weight: 500;
+}
+
+/* Ikon di dalam sidebar */
+.sidebar .nav-link .fa {
+    margin-right: 10px;
+}
