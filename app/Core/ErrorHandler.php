@@ -22,9 +22,9 @@ class ErrorHandler {
 
     public static function handleException(\Throwable $exception) {
         http_response_code(500);
-        $config = require __DIR__ . '/../../config/app.php'; // Updated path for config
-
-        if ($config['env'] === 'development') {
+        
+        // Use the new config helper
+        if (config('app.env') === 'development') {
             // In development, show detailed error page
             self::showDevelopmentErrorPage($exception);
         } else {

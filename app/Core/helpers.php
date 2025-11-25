@@ -124,3 +124,49 @@ if (!function_exists('app')) {
         return $container->resolve($abstract);
     }
 }
+
+// --- Configuration Helper ---
+if (!function_exists('config')) {
+    /**
+     * Get the value of a configuration item.
+     * Supports dot notation for nested arrays (e.g., 'app.env').
+     *
+     * @param string|null $key
+     * @param mixed $default
+     * @return mixed
+     */
+    function config(string $key = null, $default = null) {
+        static $configCache = [];
+        $configPath = __DIR__ . '/../../config/';
+
+        if (is_null($key)) {
+            return $configCache; // Return all cached config if no key is given
+        }
+
+        $parts = explode('.', $key);
+        $file = array_shift($parts); // 'app' from 'app.env'
+
+        // Load config file if not already cached
+        if (!isset($configCache[$file])) {
+            $filePath = $configPath . $file . '.php';
+            if (file_exists($filePath)) {
+                $configCache[$file] = require $filePath;
+            } else {
+                return $default; // Config file not found
+            }
+        }
+
+        $value = $configCache[$file];
+
+        // Navigate through the array using dot notation
+        foreach ($parts as $part) {
+            if (is_array($value) && isset($value[$part])) {
+                $value = $value[$part];
+            } else {
+                return $default; // Key not found
+            }
+        }
+
+        return $value;
+    }
+}

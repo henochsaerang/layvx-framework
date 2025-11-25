@@ -18,8 +18,7 @@ class Kernel {
 
     /** The application's route middleware groups. */
     protected $routeMiddleware = [
-        'auth.admin' => \App\Middleware\AuthAdminMiddleware::class,
-        'auth.karyawan' => \App\Middleware\AuthKaryawanMiddleware::class,
+        // No application-specific route middleware by default
     ];
 
     /** The registered console commands. */

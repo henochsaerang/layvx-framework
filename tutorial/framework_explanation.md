@@ -21,43 +21,74 @@ DB_PASSWORD=
 
 ### b. File Konfigurasi (`config/`)
 Folder `config/` berisi file-file yang membaca variabel dari `.env`.
-- `config/app.php`: Mengatur konfigurasi aplikasi dasar seperti environment (`APP_ENV`) dan mendaftarkan Service Provider.
-- `config/database.php`: Mengatur semua koneksi database.
+
+Framework ini menggunakan helper global `config()` untuk mengakses nilai-nilai konfigurasi, termasuk menggunakan *dot notation* untuk mengakses array bersarang (misalnya, `config('app.env')`).
+
+```php
+// config/app.php (Contoh)
+return [
+    'name' => 'LayVX Framework',
+    'env' => $_ENV['APP_ENV'] ?? 'production',
+    'providers' => [
+        // ...
+    ],
+];
+```
+Anda dapat mengakses nilai `env` dari `app.php` dengan `config('app.env')`.
 
 ---
 
 ## 2. Arsitektur Inti & Alur Request
 
-### a. Service Provider
-Daripada melakukan *binding* dependensi di `public/index.php`, framework ini sekarang menggunakan **Service Provider Pattern**. Semua pendaftaran service dan *binding* ke *Service Container* dilakukan di dalam `App\Providers\AppServiceProvider.php`.
+### a. Service Container & Auto-Wiring
+Service Container (`App\Core\Container`) adalah inti dari manajemen dependensi framework. Ia memungkinkan Anda untuk:
+
+*   **Auto-Wiring (Injeksi Dependensi Otomatis)**: Untuk sebagian besar kelas, container akan secara otomatis menginjeksi dependensi ke dalam konstruktor atau metode controller Anda berdasarkan *type-hinting* (menggunakan PHP Reflection API).
+    ```php
+    class ContohController {
+        // Container akan otomatis menyediakan instance Request
+        public function __construct(App\Core\Request $request) {
+            $this->request = $request;
+        }
+    }
+    ```
+*   **Manual Binding**: Untuk service yang lebih kompleks (misalnya, perlu logika khusus untuk pembuatan instance, atau perlu dipastikan hanya ada satu instance/singleton), Anda dapat mendaftarkannya secara manual. Ini dilakukan di **Service Provider**.
+
+### b. Service Provider
+**Service Provider** adalah tempat utama untuk mendaftarkan service dan *binding* ke *Service Container*. Ini dilakukan di dalam `App\Providers\AppServiceProvider.php` dan service provider lainnya yang Anda buat.
 
 ```php
 // app/Providers/AppServiceProvider.php
 class AppServiceProvider extends ServiceProvider {
     public function register() {
-        // Bind Router sebagai singleton
+        // Contoh binding manual untuk Router (singleton, butuh Request di konstruktor)
         $this->container->singleton(Router::class, function (Container $container) {
             return new Router($container->resolve(Request::class));
         });
         
-        // Bind koneksi database (PDO)
+        // Contoh binding manual untuk koneksi database (PDO)
         $this->container->singleton(PDO::class, function () {
-            // ... logika koneksi database
+            // Menggunakan helper config() baru untuk membaca konfigurasi database
+            $driver = config('database.driver', 'mysql');
+            $host = config('database.host', '127.0.0.1');
+            // ... dst
+            return new PDO($dsn, $dbUser, $dbPass);
         });
     }
 }
 ```
-Service Provider ini didaftarkan di `config/app.php` untuk di-load secara otomatis.
+Service Provider didaftarkan di `config/app.php` untuk di-load secara otomatis.
 
-### b. Siklus Hidup Request (Middleware Pipeline)
+### c. Siklus Hidup Request (Middleware Pipeline)
 Framework ini mengadopsi arsitektur **Middleware Pipeline** yang modern, sering dianalogikan sebagai "lapisan bawang" (onion).
 
-1.  **Entry Point**: Semua request masuk melalui `public/index.php`. File ini hanya melakukan setup awal.
-2.  **Kernel**: Request kemudian diserahkan ke `App\Core\Kernel`. Kernel adalah "jantung" dari aplikasi HTTP Anda.
-3.  **Middleware Pipeline**: Kernel membangun sebuah "pipeline" (pipa) yang terdiri dari serangkaian middleware.
+1.  **Entry Point**: Semua request masuk melalui `public/index.php`. File ini hanya melakukan setup awal dan memulai sesi.
+2.  **Kernel**: Request kemudian diserahkan ke `App\Core\Kernel`. Kernel adalah "jantung" dari aplikasi HTTP Anda yang mengelola pipeline middleware.
+3.  **Middleware Pipeline**: Kernel membangun sebuah "pipeline" yang terdiri dari serangkaian middleware.
 4.  **Perjalanan Request**: Request "mengalir" masuk melewati setiap lapisan middleware (misalnya, `VerifyCsrfToken` -> `AuthAdminMiddleware`). Setiap middleware dapat memeriksa atau memodifikasi request sebelum meneruskannya ke lapisan selanjutnya.
-5.  **Tujuan (Controller)**: Jika request berhasil melewati semua middleware, ia akan mencapai tujuannya, yaitu metode Controller yang telah ditentukan oleh Router.
-6.  **Perjalanan Response**: Response yang dihasilkan oleh Controller kemudian "mengalir" kembali keluar melewati lapisan-lapisan middleware yang sama, memberikan kesempatan bagi middleware untuk memodifikasi response sebelum dikirim ke user.
+5.  **Injeksi Parameter Rute**: Saat request mencapai Controller, `Router` akan secara otomatis menginjeksi parameter rute dari URI (misalnya, nilai `{id}` dari `/posts/{id}`) ke dalam parameter metode Controller yang sesuai.
+6.  **Tujuan (Controller)**: Jika request berhasil melewati semua middleware, ia akan mencapai tujuannya, yaitu metode Controller.
+7.  **Perjalanan Response**: Response dari Controller kemudian "mengalir" kembali keluar melewati lapisan-lapisan middleware yang sama, memberikan kesempatan bagi middleware untuk memodifikasi response sebelum dikirim ke user.
 
 ---
 
@@ -124,12 +155,12 @@ use App\Core\Route;
 Route::get('/', ['LandingController', 'index']);
 
 // Rute Dinamis dengan parameter {id}
+// Parameter rute ($id) akan otomatis diinjeksi ke metode controller.
 Route::get('/posts/{id}', ['PostController', 'show']);
 ```
-Parameter rute (`{id}`) akan secara otomatis diinjeksikan ke dalam metode controller yang sesuai berdasarkan nama variabel.
 
 ### b. Route Grouping (Mengelompokkan Rute)
-Anda dapat mengelompokkan rute yang memiliki atribut yang sama (misalnya, middleware yang sama) menggunakan metode `Route::group()`. Ini membuat file rute Anda lebih rapi dan menghindari pengulangan kode.
+Anda dapat mengelompokkan rute yang memiliki atribut yang sama (misalnya, middleware yang sama) menggunakan metode `Route::group()`. Ini membuat file rute Anda lebih rapi dan menghindari pengulangan kode, serta bersifat **stateless** (tidak perlu mengingat rute terakhir yang didaftarkan).
 
 ```php
 // routes/web.php
@@ -138,17 +169,15 @@ use App\Core\Route;
 // Grup Rute Admin dengan middleware 'auth.admin'
 Route::group(['middleware' => 'auth.admin'], function ($router) {
     $router->get('/admin/dashboard', ['DashboardController', 'index']);
-    // Tambahkan rute admin lain di sini
-    // $router->get('/admin/profil', ['AdminController', 'profil']);
+    $router->get('/admin/settings', ['AdminController', 'settings']);
 });
 
 // Grup Rute Karyawan dengan middleware 'auth.karyawan'
 Route::group(['middleware' => 'auth.karyawan'], function ($router) {
     $router->get('/karyawan/dashboard', ['KaryawanDashboardController', 'index']);
-    // Tambahkan rute karyawan lain di sini
 });
 ```
-*Catatan: Metode `Route::middleware()` yang stateful sekarang sudah tidak digunakan dan telah digantikan oleh `Route::group()`.*
+*Catatan: Metode `Route::middleware()` yang stateful kini sudah tidak digunakan dan telah digantikan oleh `Route::group()`.*
 
 ---
 
@@ -156,37 +185,31 @@ Route::group(['middleware' => 'auth.karyawan'], function ($router) {
 
 Untuk pengelolaan sesi yang lebih bersih, aman, dan fleksibel, framework ini menyediakan class `App\Core\Session`. Anda **tidak disarankan** lagi untuk mengakses `$_SESSION` secara langsung.
 
-**Penggunaan:**
+**Metode Utama `App\Core\Session`:**
+*   `Session::start()`: Memulai sesi PHP (sudah dipanggil secara otomatis di `public/index.php`).
+*   `Session::set(string $key, mixed $value)`: Mengatur nilai dalam sesi.
+*   `Session::get(string $key, mixed $default = null)`: Mengambil nilai dari sesi, dengan nilai default opsional.
+*   `Session::has(string $key)`: Memeriksa apakah kunci sesi ada.
+*   `Session::forget(string $key)`: Menghapus satu kunci dari sesi.
+*   `Session::token()`: Mengambil token CSRF.
+*   `Session::regenerateToken()`: Membuat ulang token CSRF (dilakukan secara otomatis di `public/index.php` jika token belum ada).
+
+**Contoh Penggunaan:**
 
 ```php
-// app/Core/Session.php
-// (Sudah dibuatkan di App/Core/)
+use App\Core\Session;
 
-// Memulai sesi (dilakukan otomatis di public/index.php)
-// Session::start(); 
-
-// Mengatur nilai sesi
+// Mengatur nilai
 Session::set('user_id', 1);
-Session::set('nama_pengguna', 'Budi');
 
-// Mengambil nilai sesi
-$userId = Session::get('user_id'); // Hasil: 1
-$namaPengguna = Session::get('nama_pengguna', 'Tamu'); // Hasil: Budi
-$level = Session::get('level_akses', 'guest'); // Hasil: 'guest' (jika tidak ada)
+// Mengambil nilai
+$userId = Session::get('user_id');
 
-// Memeriksa keberadaan kunci sesi
-if (Session::has('user_id')) {
-    // ...
-}
-
-// Menghapus kunci sesi tertentu
+// Menghapus nilai
 Session::forget('user_id');
 
 // Mengambil token CSRF
 $csrfToken = Session::token();
-
-// Membuat ulang (meregenerasi) token CSRF
-Session::regenerateToken(); 
 ```
 
 ---

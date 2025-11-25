@@ -2,13 +2,19 @@
 
 namespace App\Controllers;
 
-use App\Core\Request;
 use App\Core\Response;
 
-class LandingController {
+class LandingController
+{
+    public function index()
+    {
+        // Data yang dikirim ke view
+        $data = [
+            'framework' => 'LayVX',
+            'version' => '1.0.0',
+            'phpVersion' => phpversion(),
+        ];
 
-    public function index() {
-       
-        return Response::view('index');
+        return Response::view('welcome', $data);
     }
 }

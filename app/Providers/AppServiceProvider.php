@@ -28,17 +28,23 @@ class AppServiceProvider extends ServiceProvider {
 
         // Bind the database connection as a singleton
         $this->container->singleton(PDO::class, function () {
-            $config = require __DIR__ . '/../../config/database.php';
+            // Use the new config helper
+            $driver = config('database.driver', 'mysql');
+            $host = config('database.host', '127.0.0.1');
+            $dbName = config('database.db_name', 'layvx_db');
+            $dbUser = config('database.db_user', 'root');
+            $dbPass = config('database.db_pass', '');
+            $port = config('database.port', '3306');
+            $charset = config('database.charset', 'utf8mb4');
             
-            $driver = $config['driver'] ?? 'mysql';
             $dsn = '';
 
             switch ($driver) {
                 case 'mysql':
-                    $dsn = "mysql:host={$config['host']};dbname={$config['db_name']};charset=utf8mb4";
+                    $dsn = "mysql:host={$host};dbname={$dbName};charset={$charset}";
                     break;
                 case 'pgsql':
-                    $dsn = "pgsql:host={$config['host']};port={$config['port']};dbname={$config['db_name']}";
+                    $dsn = "pgsql:host={$host};port={$port};dbname={$dbName}";
                     break;
                 // Add other drivers like sqlite here
                 default:
@@ -46,7 +52,7 @@ class AppServiceProvider extends ServiceProvider {
             }
 
             try {
-                $pdo = new PDO($dsn, $config['db_user'], $config['db_pass']);
+                $pdo = new PDO($dsn, $dbUser, $dbPass);
                 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
                 return $pdo;
