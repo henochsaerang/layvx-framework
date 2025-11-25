@@ -9,20 +9,50 @@ class Request {
     protected $postParams = [];
     protected $headers = [];
     protected $serverParams = [];
+    protected $user = null;
 
     public function __construct() {
-        $this->uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-        $this->method = $_SERVER['REQUEST_METHOD'];
-        $this->queryParams = $_GET;
-        $this->postParams = $_POST;
-        $this->headers = getallheaders();
-        $this->serverParams = $_SERVER;
+        if (php_sapi_name() === 'cli') {
+            // If running in CLI, set safe defaults.
+            $this->uri = '/';
+            $this->method = 'CLI';
+            $this->serverParams = $_SERVER; // Arguments are in $_SERVER['argv']
+        } else {
+            // If running in a web server environment.
+            $this->uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+            $this->method = $_SERVER['REQUEST_METHOD'];
+            $this->queryParams = $_GET;
+            $this->postParams = $_POST;
+            $this->serverParams = $_SERVER;
 
-        // Handle JSON input
-        if (strpos($this->header('Content-Type', ''), 'application/json') !== false) {
-            $jsonData = json_decode(file_get_contents('php://input'), true);
-            $this->postParams = array_merge($this->postParams, $jsonData ?: []);
+            // getallheaders() is not always available, e.g., on Nginx.
+            if (function_exists('getallheaders')) {
+                $this->headers = getallheaders();
+            } else {
+                $this->headers = $this->getHeadersFromServer();
+            }
+
+            // Handle JSON input
+            if (strpos($this->header('Content-Type', ''), 'application/json') !== false) {
+                $jsonData = json_decode(file_get_contents('php://input'), true);
+                $this->postParams = array_merge($this->postParams, $jsonData ?: []);
+            }
         }
+    }
+    
+    /**
+     * Fallback to get headers from $_SERVER global if getallheaders() is not available.
+     * @return array
+     */
+    protected function getHeadersFromServer(): array {
+        $headers = [];
+        foreach ($_SERVER as $key => $value) {
+            if (strpos($key, 'HTTP_') === 0) {
+                $headerKey = str_replace('_', '-', substr($key, 5));
+                $headers[$headerKey] = $value;
+            }
+        }
+        return $headers;
     }
 
     /**
@@ -99,5 +129,25 @@ class Request {
      */
     public function server(string $key, $default = null) {
         return $this->serverParams[$key] ?? $default;
+    }
+
+    /**
+     * Set the authenticated user on the request.
+     *
+     * @param mixed $user
+     * @return $this
+     */
+    public function setUser($user): self {
+        $this->user = $user;
+        return $this;
+    }
+
+    /**
+     * Get the authenticated user.
+     *
+     * @return mixed
+     */
+    public function user() {
+        return $this->user;
     }
 }

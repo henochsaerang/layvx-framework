@@ -16,33 +16,16 @@ require_once '../app/Core/Env.php';
 
 require_once '../app/Core/autoloader.php';
 
-// --- Service Container Setup ---
+// --- Service Container & Providers ---
 
 $container = new Container();
 App::setContainer($container);
 
-// Capture the request early
-$request = Request::capture();
-$container->singleton(Request::class, fn() => $request);
-
-// Bind the Router, it depends on the Request
-$container->singleton(Router::class, function () use ($request) {
-    return new Router($request);
-});
-
-// Bind the database connection
-$container->singleton(PDO::class, function () {
-    $config = require __DIR__ . '/../config/database.php';
-    try {
-        $dsn = "mysql:host={$config['host']};dbname={$config['db_name']};charset=utf8mb4";
-        $pdo = new PDO($dsn, $config['db_user'], $config['db_pass']);
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        return $pdo;
-    } catch (PDOException $e) {
-        die("Koneksi Gagal: " . $e->getMessage());
-    }
-});
+// Register Service Providers
+$providers = require __DIR__ . '/../config/app.php';
+foreach ($providers['providers'] as $providerClass) {
+    (new $providerClass($container))->register();
+}
 
 // --- Register Handlers & Helpers ---
 
@@ -51,27 +34,26 @@ require_once '../app/Core/ErrorHandler.php';
 
 require_once '../app/Core/helpers.php';
 
-session_start();
-if (!isset($_SESSION['tuama_token'])) {
-    $_SESSION['tuama_token'] = bin2hex(random_bytes(32));
+use App\Core\Session;
+
+// Start the session and initialize CSRF token if not present
+Session::start();
+if (!Session::has('tuama_token')) {
+    Session::regenerateToken();
 }
 
-// --- Dispatch The Request ---
+// --- Handle The Request ---
 
-// Load route definitions from routes/web.php
-Route::load('../routes/web.php');
+// Load route definitions
+\App\Core\Route::load('../routes/web.php');
 
-// Dispatch the router to get a response
-$response = app(Router::class)->dispatch();
+// Resolve the request from the container
+$request = $container->resolve(\App\Core\Request::class);
+
+// Resolve and run the kernel
+$kernel = new \App\Core\Kernel($container, $container->resolve(\App\Core\Router::class));
+$response = $kernel->handleRequest($request);
 
 // --- Send The Response ---
+$response->send();
 
-if ($response instanceof Response) {
-    $response->send();
-} elseif ($response) {
-    (new Response($response))->send();
-} else {
-    // This case should not be reached if the router is working correctly,
-    // as it handles its own 404 responses.
-    (new Response('Not Found', 404))->send();
-}

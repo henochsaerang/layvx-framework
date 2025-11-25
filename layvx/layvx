@@ -1,54 +1,24 @@
 <?php
 
-// File: layvx (New Object-Oriented Console Runner)
+// File: layvx (Object-Oriented Console Runner)
 
-// --- BOOTSTRAPPING ---
+// --- Bootstrap The Application ---
 require_once __DIR__ . '/../app/Core/autoloader.php';
 require_once __DIR__ . '/../app/Core/Env.php';
 
 \App\Core\Env::load(__DIR__ . '/..');
 
-/**
- * Register The Service Container
- */
+// --- Service Container & Providers ---
 $container = new \App\Core\Container();
 \App\Core\App::setContainer($container);
 
-// Bind the database connection as a singleton
-$container->singleton(\PDO::class, function () {
-    $config = require __DIR__ . '/../config/database.php';
-    
-    if (empty($config['db_name'])) {
-        return new \PDO(
-            "mysql:host={$config['host']}",
-            $config['db_user'],
-            $config['db_pass']
-        );
-    }
-
-    $dsn = "mysql:host={$config['host']};dbname={$config['db_name']};charset=utf8mb4";
-    try {
-        $pdo = new \PDO(
-            $dsn,
-            $config['db_user'],
-            $config['db_pass']
-        );
-        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
-        return $pdo;
-    } catch (\PDOException $e) {
-        if (strpos($e->getMessage(), 'Unknown database') !== false) {
-             return new \PDO(
-                "mysql:host={$config['host']}",
-                $config['db_user'],
-                $config['db_pass']
-            );
-        }
-        die("Koneksi Gagal: " . $e->getMessage());
-    }
-});
-
+// Register Service Providers
+$providers = require __DIR__ . '/../config/app.php';
+foreach ($providers['providers'] as $providerClass) {
+    (new $providerClass($container))->register();
+}
 
 // --- KERNEL & COMMAND HANDLING ---
-$kernel = new \App\Core\Kernel();
-$kernel->handle($_SERVER['argv']);
+$router = $container->resolve(\App\Core\Router::class);
+$kernel = new \App\Core\Kernel($container, $router);
+$kernel->handleConsole($_SERVER['argv']);

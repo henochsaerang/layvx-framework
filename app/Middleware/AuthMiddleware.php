@@ -2,28 +2,49 @@
 
 namespace App\Middleware;
 
+use App\Core\Middleware;
+use App\Core\Request;
+use App\Core\Response;
+use App\Models\Admin;
+use App\Core\Session;
+use Closure;
+
 /**
- * Class AuthMiddleware
+ * Class AuthAdminMiddleware
  *
- * Checks if a user is authenticated before allowing access to a route.
+ * Checks if an admin is authenticated before allowing access to a route.
  */
-class AuthMiddleware
+class AuthAdminMiddleware implements Middleware
 {
     /**
      * Handle an incoming request.
      *
-     * If the user is not logged in (checked via a session variable),
-     * they are redirected to the login page.
+     * @param Request $request
+     * @param Closure $next
+     * @return mixed
      */
-    public function handle()
+    public function handle(Request $request, Closure $next)
     {
-        // Check if the user session exists.
-        // You can use any key you set upon successful login, e.g., 'user_id' or 'is_logged_in'
-        if (!isset($_SESSION['user_id'])) {
-            // User is not authenticated, redirect to the login page.
-            // The route() function is available globally from helpers.php
-            header('Location: ' . route('login'));
-            exit(); // Stop script execution after redirect
+        $userId = Session::get('user_id');
+
+        // If there's no user ID in the session, redirect to login
+        if (!$userId) {
+            return Response::redirect('/login-admin');
         }
+
+        // 2. Use the Admin model to find the user in the database
+        $admin = Admin::find($userId);
+
+        // If no user is found for the ID in the session, the session is invalid.
+        if (!$admin) {
+            Session::forget('user_id'); // Clear the invalid session
+            return Response::redirect('/login-admin');
+        }
+
+        // Attach the user object to the request for easy access in controllers
+        $request->setUser($admin);
+
+        // 3. User is authenticated and valid. Proceed with the request.
+        return $next($request);
     }
 }

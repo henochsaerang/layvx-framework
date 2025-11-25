@@ -32,6 +32,17 @@ class Route {
     }
 
     /**
+     * Create a route group with shared attributes.
+     *
+     * @param array $attributes
+     * @param \Closure $callback
+     * @return void
+     */
+    public static function group(array $attributes, \Closure $callback) {
+        self::getRouter()->group($attributes, $callback);
+    }
+
+    /**
      * Get the router instance from the container.
      *
      * @return Router

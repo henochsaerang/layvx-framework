@@ -1,12 +1,14 @@
 <?php
 // app/Core/helpers.php
 
+use App\Core\Session;
+
 if (!function_exists('tuama_field')) {
     /**
      * Generate a hidden HTML input field for Tuama (CSRF) token protection.
      */
     function tuama_field() {
-        $token = $_SESSION['tuama_token'] ?? '';
+        $token = Session::token() ?? '';
         echo '<input type="hidden" name="tuama_token" value="' . htmlspecialchars($token, ENT_QUOTES, 'UTF-8') . '">';
     }
 }
@@ -19,8 +21,16 @@ if (!function_exists('render')) {
      * @param array $data The data to be extracted into variables for the view.
      */
     function render(string $view, array $data = []) {
-        $basePath = __DIR__ . '/../../';
-        $viewPath = $basePath . 'views/' . str_replace('.', '/', $view) . '.php';
+        $basePath = __DIR__ . '/../../'; // Project root
+
+        $viewPath = '';
+        if (str_starts_with($view, 'errors.')) {
+            // For error views, look in app/Core/errors/
+            $viewPath = $basePath . 'app/Core/' . str_replace('.', '/', $view) . '.php';
+        } else {
+            // For regular views, look in views/
+            $viewPath = $basePath . 'views/' . str_replace('.', '/', $view) . '.php';
+        }
 
         if (!file_exists($viewPath)) {
             throw new Exception("View not found: {$viewPath}");

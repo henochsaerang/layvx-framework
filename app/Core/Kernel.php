@@ -11,6 +11,18 @@ use App\Commands\MigrateCommand;
 use App\Commands\ServeCommand;
 
 class Kernel {
+    /** The application's global HTTP middleware stack. */
+    protected $globalMiddleware = [
+        \App\Middleware\VerifyCsrfToken::class,
+    ];
+
+    /** The application's route middleware groups. */
+    protected $routeMiddleware = [
+        'auth.admin' => \App\Middleware\AuthAdminMiddleware::class,
+        'auth.karyawan' => \App\Middleware\AuthKaryawanMiddleware::class,
+    ];
+
+    /** The registered console commands. */
     protected $commands = [
         'serve' => ServeCommand::class,
         'cache:clear' => CacheClearCommand::class,
@@ -22,7 +34,97 @@ class Kernel {
         'help' => HelpCommand::class,
     ];
 
-    public function handle($argv) {
+    /** The application container. */
+    protected $container;
+
+    /** The router instance. */
+    protected $router;
+
+    public function __construct(Container $container, Router $router) {
+        $this->container = $container;
+        $this->router = $router;
+    }
+
+    /**
+     * Handle an incoming HTTP request.
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function handleRequest(Request $request): Response {
+        try {
+            $routeInfo = $this->router->dispatch();
+
+            if (is_null($routeInfo)) {
+                return Response::view('errors.404', [], 404);
+            }
+
+            // The final destination for the request after passing through all middleware.
+            $destination = function ($request) use ($routeInfo) {
+                return $this->router->callAction($routeInfo['action'], $routeInfo['params']);
+            };
+
+            $middlewares = $this->resolveMiddleware($routeInfo['middleware']);
+
+            // Build the pipeline by wrapping the destination in middleware layers.
+            $pipeline = array_reduce(
+                array_reverse($middlewares),
+                function (\Closure $next, string $middlewareClass) {
+                    // Return a new closure that calls the middleware and passes the previous closure as $next.
+                    return function (Request $request) use ($next, $middlewareClass) {
+                        return $this->container->resolve($middlewareClass)->handle($request, $next);
+                    };
+                },
+                $destination // The initial "next" is the destination itself.
+            );
+            
+            // Execute the fully-formed pipeline.
+            $response = $pipeline($request);
+
+            return $this->prepareResponse($response);
+
+        } catch (\Exception $e) {
+            // In a real app, this should use a registered exception handler.
+            error_log($e->getMessage());
+            error_log($e->getTraceAsString());
+            return Response::view('errors.500', ['exception' => $e], 500);
+        }
+    }
+
+    /**
+     * Resolve middleware aliases to their class names.
+     *
+     * @param array $middlewares
+     * @return array
+     */
+    protected function resolveMiddleware(array $middlewares): array {
+        $resolved = $this->globalMiddleware;
+        foreach ($middlewares as $middleware) {
+            $resolved[] = $this->routeMiddleware[$middleware] ?? $middleware;
+        }
+        return array_unique($resolved);
+    }
+    
+    /**
+     * Ensure the response is a proper Response object.
+     *
+     * @param mixed $response
+     * @return Response
+     */
+    protected function prepareResponse($response): Response {
+        if (!$response instanceof Response) {
+            return new Response($response);
+        }
+        return $response;
+    }
+
+    /**
+     * Handle a console command.
+     *
+     * @param array $argv
+     * @return void
+     */
+    public function handleConsole($argv) {
         $commandName = $argv[1] ?? 'help';
         $args = array_slice($argv, 2);
 

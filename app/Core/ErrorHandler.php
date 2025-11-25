@@ -17,7 +17,7 @@ class ErrorHandler {
 
     public static function handleError($level, $message, $file, $line) {
         // Convert all PHP errors to exceptions
-        throw new ErrorException($message, 0, $level, $file, $line);
+        throw new \ErrorException($message, 0, $level, $file, $line);
     }
 
     public static function handleException(\Throwable $exception) {

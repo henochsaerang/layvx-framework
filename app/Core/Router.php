@@ -15,6 +15,12 @@ class Router {
 
     protected $request;
 
+    /**
+     * A stack to hold middleware for nested route groups.
+     * @var array
+     */
+    protected array $groupMiddlewareStack = [];
+
     public function __construct(Request $request) {
         $this->request = $request;
     }
@@ -27,39 +33,82 @@ class Router {
         $this->addRoute('POST', $uri, $action);
     }
 
+    /**
+     * Create a route group with shared attributes.
+     *
+     * @param array $attributes
+     * @param Closure $callback
+     */
+    public function group(array $attributes, Closure $callback)
+    {
+        // Push middleware to the group stack
+        $middleware = $attributes['middleware'] ?? [];
+        if (!empty($middleware)) {
+            $this->groupMiddlewareStack[] = $middleware;
+        }
+
+        // Execute the callback to define routes within the group
+        $callback($this);
+
+        // Pop middleware from the group stack
+        if (!empty($middleware)) {
+            array_pop($this->groupMiddlewareStack);
+        }
+    }
+
     protected function addRoute(string $method, string $uri, $action) {
-        $this->routes[$method][$uri] = $action;
+        $groupMiddleware = !empty($this->groupMiddlewareStack)
+            ? end($this->groupMiddlewareStack)
+            : [];
+
+        $this->routes[$method][$uri] = [
+            'action' => $action,
+            'middleware' => is_array($groupMiddleware) ? $groupMiddleware : [$groupMiddleware],
+        ];
     }
     
-    public function loadRoutes(string $file) {
+    public function loadRoutes(string $file): self {
         // A bit of a trick to make the static Route class available to the routes file
         $router = $this;
         require $file;
         return $this;
     }
 
-    public function dispatch() {
+    /**
+     * Find the route matching the current request.
+     * 
+     * @return array|null
+     */
+    public function dispatch(): ?array {
         $uri = $this->request->uri();
         $method = $this->request->method();
 
-        foreach ($this->routes[$method] as $route => $action) {
-            // Convert route to regex: /users/{id} -> /users/([a-zA-Z0-9_]+)
-            $regex = preg_replace('/\{([a-zA-Z]+)\}/', '(?P<$1>[a-zA-Z0-9_]+)', $route);
+        if (!isset($this->routes[$method])) {
+            return null;
+        }
+
+        foreach ($this->routes[$method] as $route => $data) {
+            // Convert route to regex: /users/{id} -> /users/(?P<id>[a-zA-Z0-9_]+)
+            $regex = preg_replace('/\{([a-zA-Z_]+)\}/', '(?P<$1>[a-zA-Z0-9_]+)', $route);
             $regex = '#^' . $regex . '$#';
 
             if (preg_match($regex, $uri, $matches)) {
                 // Get associative array of route parameters
                 $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
 
-                return $this->callAction($action, $params);
+                return [
+                    'action' => $data['action'],
+                    'middleware' => $data['middleware'],
+                    'params' => $params,
+                ];
             }
         }
 
         // If no route was matched
-        return Response::view('errors.404', [], 404);
+        return null;
     }
 
-    protected function callAction($action, array $params) {
+    public function callAction($action, array $params) {
         if (is_callable($action)) {
             return call_user_func($action, ...array_values($params));
         }
