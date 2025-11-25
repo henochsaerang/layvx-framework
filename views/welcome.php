@@ -360,15 +360,15 @@ Route::get('/', ['LandingController', 'index']);</code></pre>
                 <div class="card-body">
                     <div class="card-content-inner">
                         <h4>Menjalankan Server</h4>
-                        <pre><code>php layvx serve</code></pre>
+                        <pre><code>layvx serve</code></pre>
                         
                         <h4>Generator Kode</h4>
                         <p class="doc-text">Membuat controller dan model beserta migrasinya secara instan.</p>
-<pre><code>php layvx buat:controller UserController
-php layvx buat:model Product -t</code></pre>
+<pre><code>layvx buat:controller UserController
+layvx buat:model Product -t</code></pre>
                         
                         <h4>Migrasi Database</h4>
-                        <pre><code>php layvx migrasi</code></pre>
+                        <pre><code>layvx migrasi</code></pre>
                     </div>
                 </div>
             </div>
