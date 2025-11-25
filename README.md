@@ -21,10 +21,10 @@ Ikuti langkah-langkah berikut untuk menginstal dan menjalankan LayVX Framework d
 
 1.  **Clone Repositori**:
     ```bash
-    git clone [URL_REPO_ANDA] namaproject
+    git clone https://github.com/henochsaerang/layvx-framework namaproject
     cd namaproject
     ```
-    *(Ganti `[URL_REPO_ANDA]` dengan URL repositori Git Anda)*
+    *(Ganti `https://github.com/henochsaerang/layvx-framework` dengan URL repositori Git Anda)*
 
 2.  **Konfigurasi Environment**:
     *   Buat file `.env` di root proyek Anda dengan menyalin `example.env` (jika ada) atau membuatnya secara manual.
@@ -134,4 +134,4 @@ Kami menyambut kontribusi Anda! Jika Anda menemukan bug atau memiliki saran fitu
 
 ## Lisensi
 
-(Sertakan informasi lisensi di sini, contoh: MIT License)
+Proyek ini dilisensikan di bawah [MIT License](./LICENSE).
