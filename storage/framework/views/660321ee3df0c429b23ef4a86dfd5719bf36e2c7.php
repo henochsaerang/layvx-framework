@@ -6,20 +6,20 @@
     <title>LayVX Framework</title>
     <style>
         :root {
-            --bg-body: #f8fafc; /* Slate-50 yang sangat muda */
-            --text-main: #1e293b; /* Slate-800 */
-            --text-muted: #64748b; /* Slate-500 */
+            --bg-body: #f8fafc; 
+            --text-main: #1e293b; 
+            --text-muted: #64748b;
             --card-bg: #ffffff;
             
-            /* TEMA BIRU */
-            --accent: #3b82f6; /* Blue-500 */
-            --accent-hover: #2563eb; /* Blue-600 */
-            --accent-glow: rgba(59, 130, 246, 0.15); /* Glow biru */
-            --accent-light-bg: rgba(59, 130, 246, 0.08); /* Background icon transparan */
+           
+            --accent: #3b82f6; 
+            --accent-hover: #2563eb; 
+            --accent-glow: rgba(59, 130, 246, 0.15); 
+            --accent-light-bg: rgba(59, 130, 246, 0.08); 
             
             --border: #e2e8f0;
-            --code-bg: #0f172a; /* Slate-900 */
-            --code-text: #93c5fd; /* Blue-300 */
+            --code-bg: #0f172a; 
+            --code-text: #93c5fd; 
             --warning-bg: #fff7ed;
             --warning-text: #9a3412;
             --warning-border: #fdba74;
@@ -27,7 +27,7 @@
 
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg-body: #0f172a; /* Slate-900 */
+                --bg-body: #0f172a; 
                 --text-main: #f1f5f9;
                 --text-muted: #94a3b8;
                 --card-bg: #1e293b;
@@ -50,12 +50,11 @@
             flex-direction: column;
             align-items: center;
             position: relative;
-            /* Gradient Biru Halus di Atas */
+            
             background-image: radial-gradient(circle at 50% 0%, var(--accent-glow) 0%, transparent 60%);
             background-repeat: no-repeat;
         }
 
-        /* Versi di Pojok Kanan Atas */
         .top-corner {
             position: absolute;
             top: 2rem;
@@ -71,7 +70,7 @@
             margin-top: 3rem;
         }
 
-        /* BRAND / LOGO CENTERED */
+        
         .brand-wrapper {
             text-align: center;
             margin-bottom: 3.5rem;
@@ -89,7 +88,6 @@
             justify-content: center;
         }
         
-        /* Kotak Logo */
         .logo-icon {
             display: flex;
             align-items: center;
@@ -98,11 +96,11 @@
             height: 80px;
             background: var(--card-bg);
             border: 1px solid var(--border);
-            border-radius: 16px; /* Lebih rounded */
+            border-radius: 16px; 
             margin-bottom: 1.5rem;
             margin-left: auto;
             margin-right: auto;
-            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1); /* Bayangan biru tipis */
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.1); 
         }
 
         .logo span { color: var(--text-main); }
@@ -116,7 +114,7 @@
             margin-bottom: 2rem;
         }
 
-        /* EXPANDABLE CARDS */
+        
         .card-stack {
             display: flex;
             flex-direction: column;
@@ -138,7 +136,7 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
-        /* Header Kartu */
+        
         .card-header {
             padding: 1.5rem;
             cursor: pointer;
@@ -178,7 +176,7 @@
             color: var(--text-muted);
         }
 
-        /* Content */
+       
         .card-body {
             max-height: 0;
             overflow: hidden;
@@ -189,7 +187,7 @@
 
         .card-content-inner { padding: 0 1.5rem 1.5rem 1.5rem; }
 
-        /* Active State */
+       
         .card.active {
             border-color: var(--accent);
             box-shadow: 0 0 0 1px var(--accent);
@@ -202,7 +200,7 @@
 
         .card.active .card-body { border-top-color: var(--border); }
 
-        /* Typography */
+        
         h4 { margin: 1.5rem 0 0.5rem; font-size: 1rem; color: var(--text-main); font-weight: 700; }
         .doc-text { margin-bottom: 1rem; font-size: 0.95rem; color: var(--text-muted); }
         pre {
@@ -225,7 +223,7 @@
             box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);
         }
 
-        /* INFO BOX */
+        
         .info-box {
             background-color: var(--warning-bg);
             border-left: 4px solid var(--warning-border);
@@ -246,7 +244,7 @@
             font-weight: 600;
         }
 
-        /* FOOTER */
+        
         .footer {
             margin-top: 5rem;
             text-align: center;
@@ -271,7 +269,7 @@
             gap: 0.5rem;
         }
 
-        /* Ikon hati tetap merah agar kontras dan estetik */
+       
         .heart-icon {
             color: #ef4444; 
             animation: beat 1.5s infinite;
@@ -362,15 +360,15 @@ Route::get('/', ['LandingController', 'index']);</code></pre>
                 <div class="card-body">
                     <div class="card-content-inner">
                         <h4>Menjalankan Server</h4>
-                        <pre><code>php layvx serve</code></pre>
+                        <pre><code>layvx serve</code></pre>
                         
                         <h4>Generator Kode</h4>
                         <p class="doc-text">Membuat controller dan model beserta migrasinya secara instan.</p>
-<pre><code>php layvx buat:controller UserController
-php layvx buat:model Product -t</code></pre>
+<pre><code>layvx buat:controller UserController
+layvx buat:model Product -t</code></pre>
                         
                         <h4>Migrasi Database</h4>
-                        <pre><code>php layvx migrasi</code></pre>
+                        <pre><code>layvx migrasi</code></pre>
                     </div>
                 </div>
             </div>
