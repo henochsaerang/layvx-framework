@@ -18,7 +18,7 @@ class Kernel {
 
     /** The application's route middleware groups. */
     protected $routeMiddleware = [
-        // No application-specific route middleware by default
+        //
     ];
 
     /** The registered console commands. */

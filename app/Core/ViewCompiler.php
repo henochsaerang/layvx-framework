@@ -136,10 +136,10 @@ class ViewCompiler {
     }
 
     protected function compileIf(string $content): string {
-        $content = preg_replace('/@if\s*\((.*?)\)/', '<?php if ($1): ?>', $content);
-        $content = preg_replace('/@elseif\s*\((.*?)\)/', '<?php elseif ($1): ?>', $content);
-        $content = preg_replace('/@else/', '<?php else: ?>', $content);
-        $content = preg_replace('/@endif/', '<?php endif; ?>', $content);
+        $content = preg_replace('/@if\s*\((.*)\)/', '<?php if ($1) { ?>', $content);
+        $content = preg_replace('/@elseif\s*\((.*)\)/', '<?php } elseif ($1) { ?>', $content);
+        $content = preg_replace('/@else/', '<?php } else { ?>', $content);
+        $content = preg_replace('/@endif/', '<?php } ?>', $content);
         return $content;
     }
 

@@ -3,6 +3,7 @@
 namespace App\Core;
 
 use PDO;
+use Exception;
 
 class Model {
     protected static $table; // To be defined by child classes (e.g., 'users')
@@ -357,7 +358,7 @@ class Model {
             return static::$table;
         }
         // Basic pluralization for inferred table name
-        return strtolower((new ReflectionClass($this))->getShortName()) . 's';
+        return strtolower((new \ReflectionClass($this))->getShortName()) . 's';
     }
 
     /**

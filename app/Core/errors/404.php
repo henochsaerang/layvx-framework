@@ -19,7 +19,7 @@
         <h1 class="status-code">404</h1>
         <p class="message">Halaman Tidak Ditemukan</p>
         <p style="color: #64748b;">Maaf, halaman yang Anda cari tidak ada atau telah dipindahkan.</p>
-        <a href="<?= route('home') ?>" class="link">Kembali ke Halaman Utama</a>
+        <a href="/" class="link">Kembali ke Halaman Utama</a>
         
         <div class="footer">
             LAYVX (By Henoch A Saerang)

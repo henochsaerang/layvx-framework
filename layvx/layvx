@@ -5,6 +5,7 @@
 // --- Bootstrap The Application ---
 require_once __DIR__ . '/../app/Core/autoloader.php';
 require_once __DIR__ . '/../app/Core/Env.php';
+require_once __DIR__ . '/../app/Core/helpers.php';
 
 \App\Core\Env::load(__DIR__ . '/..');
 

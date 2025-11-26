@@ -39,7 +39,7 @@ class Router {
      * @param array $attributes
      * @param Closure $callback
      */
-    public function group(array $attributes, Closure $callback)
+    public function group(array $attributes, \Closure $callback)
     {
         // Push middleware to the group stack
         $middleware = $attributes['middleware'] ?? [];

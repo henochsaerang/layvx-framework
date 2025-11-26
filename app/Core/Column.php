@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Core;
+use Exception;
 
 // app/Core/Column.php (Moved from helpers.php)
 

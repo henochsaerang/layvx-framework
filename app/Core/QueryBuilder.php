@@ -43,7 +43,12 @@ class QueryBuilder {
         return $this->join($table, $on, 'LEFT', $alias);
     }
 
-    public function where(string $column, string $operator, $value): self {
+    public function where(string $column, $operator = null, $value = null): self {
+        if (func_num_args() === 2) {
+            $value = $operator;
+            $operator = '=';
+        }
+
         $columnSql = strpos($column, '.') === false ? "`{$column}`" : $column;
         $this->wheres[] = "{$columnSql} {$operator} ?";
         $this->params[] = $value;
@@ -132,9 +137,15 @@ class QueryBuilder {
         return $stmt->execute($this->params);
     }
 
-    public function insertOrUpdate(array $data, array $updateMap): bool {
-        // This method remains largely the same as it doesn't return models.
-        // ... (implementation is unchanged)
+    public function insertOrUpdate(array $data, array $updateMap = []): bool {
+        // Handle INSERT operation
+        $columns = implode('`, `', array_keys($data));
+        $placeholders = implode(', ', array_fill(0, count($data), '?'));
+        $values = array_values($data);
+
+        $query = "INSERT INTO {$this->table} (`{$columns}`) VALUES ({$placeholders})";
+        $stmt = $this->pdo->prepare($query);
+        return $stmt->execute($values);
     }
 
     /**
