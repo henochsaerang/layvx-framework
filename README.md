@@ -15,6 +15,12 @@ LayVX adalah sebuah PHP framework MVC (Model-View-Controller) ringan yang diranc
 -   **Error Handling Robust**: Penanganan error yang informatif di lingkungan development dan generik di produksi.
 -   **Command Line Interface (CLI)**: Alat bantu `layvx` untuk mengotomatisasi tugas-tugas umum seperti membuat controller, model, dan menjalankan migrasi.
 
+Untuk detail lebih lanjut tentang setiap fitur, silakan merujuk ke folder [tutorial/](./tutorial).
+
+## Dokumentasi Lengkap
+
+Anda dapat menemukan panduan penggunaan, penjelasan fitur, dan contoh kode yang lebih rinci di dalam folder [tutorial/](./tutorial). Setiap file markdown dalam folder tersebut didedikasikan untuk menjelaskan satu fitur spesifik framework ini.
+
 ## Instalasi
 
 Ikuti langkah-langkah berikut untuk menginstal dan menjalankan LayVX Framework di lingkungan lokal Anda:
@@ -43,7 +49,7 @@ Ikuti langkah-langkah berikut untuk menginstal dan menjalankan LayVX Framework d
     *   Buat database dengan nama yang sama dengan `DB_DATABASE` di `.env` Anda.
     *   Jalankan migrasi database untuk membuat tabel:
         ```bash
-        php layvx migrasi
+        layvx migrasi
         ```
 
 4.  **Konfigurasi Web Server (Apache/Nginx)**:
@@ -64,7 +70,7 @@ Ikuti langkah-langkah berikut untuk menginstal dan menjalankan LayVX Framework d
 
 ### Menjalankan Server Pengembangan
 ```bash
-php layvx serve
+layvx serve
 ```
 Aplikasi Anda akan dapat diakses di `http://127.0.0.1:8000`.
 
@@ -120,12 +126,12 @@ class DashboardController {
 ```
 
 ### Command Line Interface (CLI)
-Gunakan `php layvx` untuk melihat daftar perintah yang tersedia.
+Gunakan `layvx` untuk melihat daftar perintah yang tersedia.
 
 ```bash
-php layvx buat:controller NamaController
-php layvx buat:model NamaModel -t
-php layvx migrasi
+layvx buat:controller NamaController
+layvx buat:model NamaModel -t
+layvx migrasi
 ```
 
 ## Kontribusi
