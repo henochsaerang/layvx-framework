@@ -116,7 +116,12 @@ class Router {
         if (is_array($action) && count($action) >= 2) {
             $controllerName = $action[0];
             $methodName = $action[1];
-            $fullyQualifiedControllerName = 'App\\Controllers\\' . $controllerName;
+            
+            if (class_exists($controllerName)) {
+                $fullyQualifiedControllerName = $controllerName;
+            } else {
+                $fullyQualifiedControllerName = 'App\\Controllers\\' . $controllerName;
+            }
 
             if (class_exists($fullyQualifiedControllerName) && method_exists($fullyQualifiedControllerName, $methodName)) {
                 $controller = app()->resolve($fullyQualifiedControllerName);
