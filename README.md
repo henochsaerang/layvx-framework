@@ -15,13 +15,6 @@ LayVX adalah sebuah **PHP framework MVC** (Model-View-Controller) ringan yang di
 * **Templating Engine**: Sintaks templating mirip Blade untuk tampilan yang bersih dan dinamis (lihat `App\Core\ViewCompiler.php`).
 * **Command Line Interface (CLI)**: Alat bantu `layvx` untuk mengotomatisasi tugas-tugas umum seperti membuat controller, model, dan menjalankan migrasi.
 
----
-
-## Dokumentasi Lengkap
-
-Anda dapat menemukan panduan penggunaan, penjelasan fitur, dan contoh kode yang lebih rinci di dalam folder `tutorial/`.
-
----
 
 ## Instalasi & Setup Cepat (Minimal Setup)
 
