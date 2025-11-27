@@ -93,7 +93,7 @@ LayVX CLI (`layvx`) menyediakan perintah untuk manajemen kode dan struktur:
 
 ## Lisensi
 
-Proyek ini dilisensikan di bawah [MIT License](https://www.google.com/search?q=./LICENSE).
+Proyek ini dilisensikan di bawah [MIT License](./LICENSE).
 
 ```
 ```
