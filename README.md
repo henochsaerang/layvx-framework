@@ -1,6 +1,4 @@
-Ini adalah versi `README.md` yang telah diperbaiki dan diformat dengan struktur Markdown yang jelas, berdasarkan konten revisi yang Anda berikan serta konsisten dengan struktur framework LayVX:
 
-````markdown
 # LayVX Framework
 
 LayVX adalah sebuah **PHP framework MVC** (Model-View-Controller) ringan yang dirancang untuk pengembangan aplikasi web yang cepat dan terstruktur. Framework ini mendukung instalasi **Minimal Setup** melalui alat CLI yang efisien.
