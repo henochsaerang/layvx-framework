@@ -29,7 +29,7 @@ LayVX mendukung instalasi minimalis. Setelah mengklon repositori, Anda dapat men
 
 ### 1. Clone Repositori & Persiapan
 ```bash
-git clone [https://github.com/henochsaerang/layvx-framework](https://github.com/henochsaerang/layvx-framework) namaproject
+git clone https://github.com/henochsaerang/layvx-framework namaproject
 cd namaproject
 ````
 
