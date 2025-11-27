@@ -38,4 +38,3 @@ return [
      */
     'charset' => $_ENV['DB_CHARSET'] ?? 'utf8mb4',
 ];
-

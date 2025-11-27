@@ -28,13 +28,13 @@ spl_autoload_register(function ($class) {
     // with .php
     $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
 
-    error_log("Autoloader trying to load: " . $class . " from " . $file);
+    // error_log("Autoloader trying to load: " . $class . " from " . $file); // DIKOMENTARI
 
     // If the file exists, require it
     if (file_exists($file)) {
         require_once $file;
-        error_log("Autoloader SUCCESS: Loaded " . $class);
+        // error_log("Autoloader SUCCESS: Loaded " . $class); // DIKOMENTARI
     } else {
-        error_log("Autoloader FAIL: File not found for " . $class . " at " . $file);
+        // error_log("Autoloader FAIL: File not found for " . $class . " at " . $file); // DIKOMENTARI
     }
 });

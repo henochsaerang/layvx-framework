@@ -3,82 +3,116 @@
 namespace App\Commands;
 
 use App\Core\Command;
-use PDO;
-use PDOException;
 
-class MigrateCommand extends Command {
-    protected $signature = 'migrasi';
-    protected $description = 'Menjalankan migrasi database yang tertunda';
+class MakeModelCommand extends Command {
+    protected $signature = 'buat:model';
+    protected $description = 'Membuat class Model baru. Gunakan flag -t untuk membuat migrasi juga.';
 
     public function handle(array $args = []) {
-        $config = require __DIR__ . '/../../config/database.php';
-        $path = __DIR__ . '/../../database/tabel';
-
-        try {
-            $pdo_server = new PDO(
-                "mysql:host={$config['host']}",
-                $config['db_user'],
-                $config['db_pass']
-            );
-            $pdo_server->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-            $stmt = $pdo_server->query("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{$config['db_name']}'");
-            if ($stmt->fetchColumn() === false) {
-                echo "Database '{$config['db_name']}' not found. Creating database...\n";
-                $pdo_server->exec("CREATE DATABASE `{$config['db_name']}`");
-                echo "Database '{$config['db_name']}' created successfully.\n";
-            }
-            $pdo_server = null;
-
-            $pdo = new PDO(
-                "mysql:host={$config['host']};dbname={$config['db_name']}",
-                $config['db_user'],
-                $config['db_pass']
-            );
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOException $e) {
-            echo "Database connection or creation failed: " . $e->getMessage() . "\n";
+        $modelName = $args[0] ?? null;
+        if (empty($modelName)) {
+            echo "Error: Please provide a name for the model.\n";
+            echo "Usage: php layvx buat:model <ModelName> [-t]\n";
             exit(1);
         }
 
-        $pdo->exec("CREATE TABLE IF NOT EXISTS migrations (id INT AUTO_INCREMENT PRIMARY KEY, migration VARCHAR(255) NOT NULL, batch INT NOT NULL)");
-        $ran_migrations_stmt = $pdo->query("SELECT migration FROM migrations");
-        $ran_migrations = $ran_migrations_stmt->fetchAll(PDO::FETCH_COLUMN);
-        $files = scandir($path);
-        $pending_migrations = [];
-        foreach ($files as $file) {
-            if (pathinfo($file, PATHINFO_EXTENSION) === 'php' && !in_array($file, $ran_migrations)) {
-                $pending_migrations[] = $file;
+        $modelName = ucfirst($modelName);
+        $basePath = __DIR__ . '/../../'; // From app/Commands to project root
+        
+        // --- Model Directory Setup ---
+        $modelDirectory = $basePath . 'app/Models';
+        if (!is_dir($modelDirectory)) {
+            if (!mkdir($modelDirectory, 0755, true)) {
+                echo "Error: Failed to create directory {$modelDirectory}.\n";
+                exit(1);
             }
+            echo "Directory created: {$modelDirectory}\n";
+        }
+        
+        $filepath = $modelDirectory . '/' . $modelName . '.php';
+
+        if (file_exists($filepath)) {
+            echo "Error: Model {$modelName} already exists.\n";
+            exit(1);
         }
 
-        if (empty($pending_migrations)) {
-            echo "Nothing to migrate.\n";
+        $tableName = strtolower($modelName) . 's'; // Simple pluralization
+
+        $stub = <<<PHP
+<?php
+
+namespace App\Models;
+
+use App\Core\Model;
+
+class {$modelName} extends Model {
+    protected static \$table = '{$tableName}';
+}
+
+PHP;
+
+        if (file_put_contents($filepath, $stub) === false) {
+            echo "Error: Could not create model file.\n";
+            exit(1);
+        }
+        echo "Model created successfully: {$filepath}\n";
+
+        if (in_array('-t', $args)) {
+            $migrationDirectory = $basePath . 'database/tabel';
+            $this->createMigration($tableName, $migrationDirectory);
+        }
+    }
+
+    private function createMigration($name, $path) {
+        // --- Migration Directory Setup ---
+        if (!is_dir($path)) {
+            if (!mkdir($path, 0755, true)) {
+                echo "Error: Failed to create directory {$path}.\n";
+                return;
+            }
+            echo "Directory created: {$path}\n";
+        }
+        
+        $type = 'create';
+        $timestamp = date('Y_m_d_His');
+        $className = 'Create' . str_replace('_', '', ucwords($name, '_')) . 'Table';
+        $filename = "{$timestamp}_create_{$name}_table.php";
+
+        // Use single-quoted strings with placeholders to avoid HEREDOC parsing issues
+        $up_stub_template = '        $this->createTable(\'__TABLE_NAME__\', [
+            col(\'id\')->id(), // Auto-incrementing primary key
+            timestamps(), // created_at and updated_at
+        ]);';
+        $down_stub_template = '        $this->dropTable(\'__TABLE_NAME__\');';
+
+        // Replace placeholders with the actual table name
+        $up_stub_content = str_replace('__TABLE_NAME__', $name, $up_stub_template);
+        $down_stub_content = str_replace('__TABLE_NAME__', $name, $down_stub_template);
+
+        $filepath = "{$path}/{$filename}";
+
+        $stub = <<<PHP
+<?php
+
+use App\Core\Migration;
+
+class {$className} extends Migration {
+    public function up() {
+        {$up_stub_content}
+    }
+
+    public function down() {
+        {$down_stub_content}
+    }
+}
+
+PHP;
+
+        if (file_put_contents($filepath, $stub) === false) {
+            echo "Error: Could not create migration file for model.\n";
             return;
         }
 
-        $batch = ($pdo->query("SELECT MAX(batch) FROM migrations")->fetchColumn() ?? 0) + 1;
-        foreach ($pending_migrations as $migration_file) {
-            echo "Migrating: {$migration_file}\n";
-            require_once "{$path}/{$migration_file}";
-            
-            $rawClassName = pathinfo($migration_file, PATHINFO_FILENAME);
-            $baseName = preg_replace('/^\d{4}_\d{2}_\d{2}_\d{6}_/', '', $rawClassName);
-            $parts = explode('_', $baseName);
-            $verb = array_shift($parts);
-            array_pop($parts);
-            $modelName = str_replace('_', '', ucwords(implode('_', $parts), '_'));
-            $classNamePrefix = ucfirst($verb);
-            $className = $classNamePrefix . $modelName . 'Table';
-
-            if (class_exists($className)) {
-                $migration = new $className($pdo);
-                $migration->up();
-                $stmt = $pdo->prepare("INSERT INTO migrations (migration, batch) VALUES (?, ?)");
-                $stmt->execute([$migration_file, $batch]);
-                echo "Migrated:  {$migration_file}\n";
-            }
-        }
-        echo "Migration completed.\n";
+        echo "Created Migration: {$filename}\n";
     }
 }

@@ -19,8 +19,19 @@ class MakeMigrationCommand extends Command {
         }
 
         $type = ($command === 'buat:tabel') ? 'create' : 'drop';
-        $path = __DIR__ . '/../../database/tabel';
+        
+        $basePath = __DIR__ . '/../../';
+        $directory = $basePath . 'database/tabel'; // Directory path
 
+        // Check if directory exists, create if not
+        if (!is_dir($directory)) {
+            if (!mkdir($directory, 0755, true)) {
+                echo "Error: Failed to create directory {$directory}.\n";
+                exit(1);
+            }
+            echo "Directory created: {$directory}\n";
+        }
+        
         $timestamp = date('Y_m_d_His');
         $className = '';
         $filename = '';
@@ -55,7 +66,7 @@ PHP;
 PHP;
         }
 
-        $filepath = "{$path}/{$filename}";
+        $filepath = "{$directory}/{$filename}";
         $stub = <<<PHP
 <?php
 
@@ -81,4 +92,3 @@ PHP;
         echo "Created Migration: {$filename}\n";
     }
 }
-

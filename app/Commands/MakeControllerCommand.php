@@ -16,11 +16,24 @@ class MakeControllerCommand extends Command {
             exit(1);
         }
 
-        $controllerName = ucfirst($controllerName) . 'Controller'; // Ensure "Controller" suffix and PascalCase
+        // Ensure "Controller" suffix and PascalCase
+        $controllerName = ucfirst($controllerName) . 'Controller';
         
+        // Define paths
         $basePath = __DIR__ . '/../../'; // From app/Commands to project root
-        $filepath = $basePath . 'app/Controllers/' . $controllerName . '.php';
+        $directory = $basePath . 'app/Controllers';
+        $filepath = $directory . '/' . $controllerName . '.php';
 
+        // Check if directory exists, create if not
+        if (!is_dir($directory)) {
+            if (!mkdir($directory, 0755, true)) {
+                echo "Error: Failed to create directory {$directory}.\n";
+                exit(1);
+            }
+            echo "Directory created: {$directory}\n";
+        }
+
+        // Check if file already exists
         if (file_exists($filepath)) {
             echo "Error: Controller {$controllerName} already exists.\n";
             exit(1);
@@ -47,4 +60,3 @@ PHP;
         echo "Controller created successfully: {$filepath}\n";
     }
 }
-

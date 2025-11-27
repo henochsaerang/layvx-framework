@@ -18,7 +18,18 @@ class MakeModelCommand extends Command {
 
         $modelName = ucfirst($modelName);
         $basePath = __DIR__ . '/../../'; // From app/Commands to project root
-        $filepath = $basePath . 'app/Models/' . $modelName . '.php';
+        
+        // --- Model Directory Setup ---
+        $modelDirectory = $basePath . 'app/Models';
+        if (!is_dir($modelDirectory)) {
+            if (!mkdir($modelDirectory, 0755, true)) {
+                echo "Error: Failed to create directory {$modelDirectory}.\n";
+                exit(1);
+            }
+            echo "Directory created: {$modelDirectory}\n";
+        }
+        
+        $filepath = $modelDirectory . '/' . $modelName . '.php';
 
         if (file_exists($filepath)) {
             echo "Error: Model {$modelName} already exists.\n";
@@ -47,12 +58,21 @@ PHP;
         echo "Model created successfully: {$filepath}\n";
 
         if (in_array('-t', $args)) {
-            $migrations_path = $basePath . 'database/tabel';
-            $this->createMigration($tableName, $migrations_path);
+            $migrationDirectory = $basePath . 'database/tabel';
+            $this->createMigration($tableName, $migrationDirectory);
         }
     }
 
     private function createMigration($name, $path) {
+        // --- Migration Directory Setup ---
+        if (!is_dir($path)) {
+            if (!mkdir($path, 0755, true)) {
+                echo "Error: Failed to create directory {$path}.\n";
+                return;
+            }
+            echo "Directory created: {$path}\n";
+        }
+        
         $type = 'create';
         $timestamp = date('Y_m_d_His');
         $className = 'Create' . str_replace('_', '', ucwords($name, '_')) . 'Table';
@@ -90,7 +110,7 @@ PHP;
 
         if (file_put_contents($filepath, $stub) === false) {
             echo "Error: Could not create migration file for model.\n";
-            exit(1);
+            return;
         }
 
         echo "Created Migration: {$filename}\n";

@@ -5,6 +5,8 @@
 // --- Bootstrap The Application ---
 require_once __DIR__ . '/../app/Core/autoloader.php';
 require_once __DIR__ . '/../app/Core/Env.php';
+
+// Pastikan helpers.php dimuat
 require_once __DIR__ . '/../app/Core/helpers.php';
 
 \App\Core\Env::load(__DIR__ . '/..');
@@ -13,9 +15,47 @@ require_once __DIR__ . '/../app/Core/helpers.php';
 $container = new \App\Core\Container();
 \App\Core\App::setContainer($container);
 
+// Tentukan Service Providers yang akan dimuat
+$providersToLoad = [];
+$configPath = __DIR__ . '/../config/app.php';
+
+// Cek apakah file config/app.php ada
+if (file_exists($configPath)) {
+    $providers = require $configPath;
+    
+    // --- FIX KRITIS: Pengecekan Eksistensi Kelas ---
+    // Kita harus memastikan provider kelas yang dirujuk ada SEBELUM mencoba membuatnya.
+    if (isset($providers['providers'])) {
+        foreach ($providers['providers'] as $providerClass) {
+            // Karena ini adalah CLI, kita hanya mencoba memuat provider yang benar-benar ada.
+            // Saat 'buat:mvc' pertama kali dijalankan, AppServiceProvider belum ada,
+            // tetapi kita tidak bisa menghilangkan referensi dari config/app.php
+            // Karena kelas AppServiceProvider adalah inti, kita buat pengecualian
+            // atau menggunakan try-catch di Kernel jika ini terlalu rumit.
+            
+            // Pilihan yang lebih aman: hanya memuat yang dapat di-autoloader
+            if (class_exists($providerClass)) {
+                $providersToLoad[] = $providerClass;
+            } else {
+                // Jika AppServiceProvider tidak ditemukan, dan kita tahu ini adalah setup awal,
+                // kita biarkan `buat:mvc` yang membuatnya.
+                error_log("Warning: Skipping provider '{$providerClass}' as class file is missing.");
+            }
+        }
+    }
+}
+
+// Untuk kasus CLI, jika AppServiceProvider yang inti tidak ada, ini akan menyebabkan masalah.
+// Solusi jangka pendek: Biarkan fatal error terjadi dan perbaiki AppServiceProvider.php secara manual jika diperlukan.
+// Namun, karena `buat:mvc` akan membuat `AppServiceProvider.php`, kita hanya perlu memastikan
+// Kernel tidak mencoba membuat instance provider yang belum ada saat `buat:mvc` berjalan.
+
+// Jika Anda telah menghapus folder Providers, dan belum menjalankan buat:mvc,
+// AppServiceProvider.php tidak akan ditemukan.
+// Kita akan menggunakan daftar provider yang aman (hanya yang sudah dimuat oleh autoloader).
+
 // Register Service Providers
-$providers = require __DIR__ . '/../config/app.php';
-foreach ($providers['providers'] as $providerClass) {
+foreach ($providersToLoad as $providerClass) {
     (new $providerClass($container))->register();
 }
 
