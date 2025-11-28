@@ -42,7 +42,7 @@ class MakeMigrationCommand extends Command {
             $className = 'Create' . str_replace('_', '', ucwords($name, '_')) . 'Table';
             $filename = "{$timestamp}_create_{$name}_table.php";
             $up_stub_content = <<<PHP
-        \\$this->createTable('{$name}', [
+        \$this->createTable('{$name}', [
             col('id')->id(), // Auto-incrementing primary key
             // Add your table columns here, e.g:
             // col('column_name')->string(255)->notNullable()->unique(),
@@ -53,13 +53,13 @@ class MakeMigrationCommand extends Command {
         ]);
 PHP;
             $down_stub_content = <<<PHP
-        \\$this->dropTable('{$name}');
+        \$this->dropTable('{$name}');
 PHP;
         } elseif ($type === 'drop') {
             $className = 'Drop' . str_replace('_', '', ucwords($name, '_')) . 'Table';
             $filename = "{$timestamp}_drop_{$name}_table.php";
             $up_stub_content = <<<PHP
-        \\$this->dropTable('{$name}');
+        \$this->dropTable('{$name}');
 PHP;
             $down_stub_content = <<<PHP
         // TODO: Define how to recreate the {$name} table here if you want to be able to rollback.
