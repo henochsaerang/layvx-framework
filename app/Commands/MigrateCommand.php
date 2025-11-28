@@ -2,117 +2,98 @@
 
 namespace App\Commands;
 
+use App\Core\App;
 use App\Core\Command;
+use PDO;
 
-class MakeModelCommand extends Command {
-    protected $signature = 'buat:model';
-    protected $description = 'Membuat class Model baru. Gunakan flag -t untuk membuat migrasi juga.';
+class MigrateCommand extends Command
+{
+    protected $signature = 'migrasi';
+    protected $description = 'Menjalankan migrasi database.';
 
-    public function handle(array $args = []) {
-        $modelName = $args[0] ?? null;
-        if (empty($modelName)) {
-            echo "Error: Please provide a name for the model.\n";
-            echo "Usage: php layvx buat:model <ModelName> [-t]\n";
-            exit(1);
-        }
+    private $pdo;
 
-        $modelName = ucfirst($modelName);
-        $basePath = __DIR__ . '/../../'; // From app/Commands to project root
-        
-        // --- Model Directory Setup ---
-        $modelDirectory = $basePath . 'app/Models';
-        if (!is_dir($modelDirectory)) {
-            if (!mkdir($modelDirectory, 0755, true)) {
-                echo "Error: Failed to create directory {$modelDirectory}.\n";
-                exit(1);
-            }
-            echo "Directory created: {$modelDirectory}\n";
-        }
-        
-        $filepath = $modelDirectory . '/' . $modelName . '.php';
-
-        if (file_exists($filepath)) {
-            echo "Error: Model {$modelName} already exists.\n";
-            exit(1);
-        }
-
-        $tableName = strtolower($modelName) . 's'; // Simple pluralization
-
-        $stub = <<<PHP
-<?php
-
-namespace App\Models;
-
-use App\Core\Model;
-
-class {$modelName} extends Model {
-    protected static \$table = '{$tableName}';
-}
-
-PHP;
-
-        if (file_put_contents($filepath, $stub) === false) {
-            echo "Error: Could not create model file.\n";
-            exit(1);
-        }
-        echo "Model created successfully: {$filepath}\n";
-
-        if (in_array('-t', $args)) {
-            $migrationDirectory = $basePath . 'database/tabel';
-            $this->createMigration($tableName, $migrationDirectory);
-        }
+    public function __construct()
+    {
+        $this->pdo = App::getContainer()->resolve(PDO::class);
     }
 
-    private function createMigration($name, $path) {
-        // --- Migration Directory Setup ---
-        if (!is_dir($path)) {
-            if (!mkdir($path, 0755, true)) {
-                echo "Error: Failed to create directory {$path}.\n";
-                return;
-            }
-            echo "Directory created: {$path}\n";
-        }
-        
-        $type = 'create';
-        $timestamp = date('Y_m_d_His');
-        $className = 'Create' . str_replace('_', '', ucwords($name, '_')) . 'Table';
-        $filename = "{$timestamp}_create_{$name}_table.php";
+    public function handle(array $args = [])
+    {
+        $this->ensureMigrationsTableExists();
 
-        // Use single-quoted strings with placeholders to avoid HEREDOC parsing issues
-        $up_stub_template = '        $this->createTable(\'__TABLE_NAME__\', [
-            col(\'id\')->id(), // Auto-incrementing primary key
-            timestamps(), // created_at and updated_at
-        ]);';
-        $down_stub_template = '        $this->dropTable(\'__TABLE_NAME__\');';
+        $executedMigrations = $this->getExecutedMigrations();
+        $migrationFiles = $this->getMigrationFiles();
 
-        // Replace placeholders with the actual table name
-        $up_stub_content = str_replace('__TABLE_NAME__', $name, $up_stub_template);
-        $down_stub_content = str_replace('__TABLE_NAME__', $name, $down_stub_template);
+        $migrationsToRun = array_diff($migrationFiles, $executedMigrations);
 
-        $filepath = "{$path}/{$filename}";
-
-        $stub = <<<PHP
-<?php
-
-use App\Core\Migration;
-
-class {$className} extends Migration {
-    public function up() {
-        {$up_stub_content}
-    }
-
-    public function down() {
-        {$down_stub_content}
-    }
-}
-
-PHP;
-
-        if (file_put_contents($filepath, $stub) === false) {
-            echo "Error: Could not create migration file for model.\n";
+        if (empty($migrationsToRun)) {
+            echo "Tidak ada migrasi baru untuk dijalankan.\n";
             return;
         }
 
-        echo "Created Migration: {$filename}\n";
+        foreach ($migrationsToRun as $migrationFile) {
+            $this->runMigration($migrationFile);
+        }
+
+        echo "Migrasi selesai.\n";
+    }
+
+    private function ensureMigrationsTableExists()
+    {
+        $this->pdo->exec("CREATE TABLE IF NOT EXISTS migrations (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            migration VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )");
+    }
+
+    private function getExecutedMigrations()
+    {
+        $stmt = $this->pdo->query("SELECT migration FROM migrations");
+        return $stmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    private function getMigrationFiles()
+    {
+        $migrationPath = __DIR__ . '/../../database/tabel';
+        $files = scandir($migrationPath);
+        $phpFiles = array_filter($files, function ($file) {
+            return pathinfo($file, PATHINFO_EXTENSION) === 'php';
+        });
+        sort($phpFiles);
+        return $phpFiles;
+    }
+
+    private function runMigration($migrationFile)
+    {
+        $migrationPath = __DIR__ . '/../../database/tabel';
+        require_once $migrationPath . '/' . $migrationFile;
+
+        $className = $this->getClassNameFromFileName($migrationFile);
+
+        if (class_exists($className)) {
+            $migration = new $className($this->pdo);
+            $migration->up();
+
+            $this->logMigration($migrationFile);
+
+            echo "Migrasi dijalankan: {$migrationFile}\n";
+        } else {
+            echo "Error: Class {$className} tidak ditemukan di file {$migrationFile}.\n";
+        }
+    }
+
+    private function logMigration($migrationFile)
+    {
+        $stmt = $this->pdo->prepare("INSERT INTO migrations (migration) VALUES (?)");
+        $stmt->execute([$migrationFile]);
+    }
+
+    private function getClassNameFromFileName($fileName)
+    {
+        $fileNameWithoutExtension = substr($fileName, 0, -4);
+        $namePart = implode('_', array_slice(explode('_', $fileNameWithoutExtension), 4));
+        return str_replace('_', '', ucwords($namePart, '_'));
     }
 }
