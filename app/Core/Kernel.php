@@ -17,6 +17,9 @@ use App\Commands\MakeModuleCommand;
 use App\Commands\MakeExeCommand;
 use App\Commands\DeleteExeCommand;
 use App\Commands\MakePwaCommand;
+use App\Commands\MakeJobsTableCommand;
+use App\Commands\QueueWorkCommand;
+use App\Commands\TestCommand;
 use App\Middleware\VerifyCsrfToken;
 
 class Kernel {
@@ -40,6 +43,8 @@ class Kernel {
         'serve' => ServeCommand::class,
         'cache:clear' => CacheClearCommand::class,
         'migrasi' => MigrateCommand::class,
+        'queue:work' => QueueWorkCommand::class,
+        'test' => TestCommand::class,
         
         // Make commands
         'buat:controller' => MakeControllerCommand::class,
@@ -47,6 +52,7 @@ class Kernel {
         'buat:middleware' => MakeMiddlewareCommand::class,
         'buat:view' => MakeViewCommand::class,
         'buat:tabel' => MakeMigrationCommand::class,
+        'buat:jobs' => MakeJobsTableCommand::class,
         'buat:hapus_tabel' => MakeMigrationCommand::class,
         'buat:modul' => MakeModuleCommand::class,
         'buat:exe' => MakeExeCommand::class,
