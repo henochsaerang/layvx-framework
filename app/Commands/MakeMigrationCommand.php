@@ -14,7 +14,7 @@ class MakeMigrationCommand extends Command {
 
         if (empty($name)) {
             echo "Error: Please provide a name for the table.\n";
-            echo "Usage: php layvx {$command} <nama_tabel>\n";
+            echo "Usage: layvx {$command} <nama_tabel>\n";
             exit(1);
         }
 

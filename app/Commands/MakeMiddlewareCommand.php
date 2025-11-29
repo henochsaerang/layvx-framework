@@ -12,7 +12,7 @@ class MakeMiddlewareCommand extends Command {
         $middlewareName = $args[0] ?? null;
         if (empty($middlewareName)) {
             echo "Error: Please provide a name for the middleware.\n";
-            echo "Usage: php layvx buat:middleware <MiddlewareName>\n";
+            echo "Usage: layvx buat:middleware <MiddlewareName>\n";
             exit(1);
         }
 

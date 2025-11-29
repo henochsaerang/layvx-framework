@@ -12,7 +12,7 @@ class MakeViewCommand extends Command {
         $viewName = $args[0] ?? null;
         if (empty($viewName)) {
             echo "Error: Please provide a name for the view.\n";
-            echo "Usage: php layvx buat:view <view.name>\n";
+            echo "Usage: layvx buat:view <view.name>\n";
             exit(1);
         }
         

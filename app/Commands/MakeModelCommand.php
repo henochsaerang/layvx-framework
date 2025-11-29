@@ -12,7 +12,7 @@ class MakeModelCommand extends Command {
         $modelName = $args[0] ?? null;
         if (empty($modelName)) {
             echo "Error: Please provide a name for the model.\n";
-            echo "Usage: php layvx buat:model <ModelName> [-t]\n";
+            echo "Usage: layvx buat:model <ModelName> [-t]\n";
             exit(1);
         }
 

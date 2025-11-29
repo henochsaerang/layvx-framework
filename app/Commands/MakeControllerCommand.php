@@ -12,7 +12,7 @@ class MakeControllerCommand extends Command {
         $controllerName = $args[0] ?? null;
         if (empty($controllerName)) {
             echo "Error: Please provide a name for the controller.\n";
-            echo "Usage: php layvx buat:controller <ControllerName>\n";
+            echo "Usage: layvx buat:controller <ControllerName>\n";
             exit(1);
         }
 
