@@ -16,6 +16,7 @@ use App\Commands\DeleteStructureCommand;
 use App\Commands\MakeModuleCommand;
 use App\Commands\MakeExeCommand;
 use App\Commands\DeleteExeCommand;
+use App\Commands\MakePwaCommand;
 
 class Kernel {
     /** The application's global HTTP middleware stack. 
@@ -48,6 +49,7 @@ class Kernel {
         'buat:hapus_tabel' => MakeMigrationCommand::class,
         'buat:modul' => MakeModuleCommand::class,
         'buat:exe' => MakeExeCommand::class,
+        'buat:pwa' => MakePwaCommand::class,
         
         // Dynamic Structure Scaffolding
         'buat:mvc' => MakeStructureCommand::class,
