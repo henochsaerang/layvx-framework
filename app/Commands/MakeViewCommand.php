@@ -38,24 +38,11 @@ class MakeViewCommand extends Command {
         }
 
         $stub = <<<PHP
-@extends('layouts.app')
-
-@section('content')
-<div class="p-8">
-    <h1 class="text-3xl font-bold mb-4">Halaman {$viewName}</h1>
-    
-    <p>
-        Ini adalah konten dari view '{$viewName}'.
-        Anda dapat menggunakan sintaks templating LayVX di sini.
-    </p>
-
-    {{-- Contoh penggunaan data: {{ \$data_anda }} --}}
-</div>
-@endsection
+Berikan di sini konten awal untuk view Anda.
 PHP;
         
-        // Buat file stub dengan tag PHP agar editor mengerti, meskipun isinya syntax blade-like
-        $finalContent = '<?php' . "\n" . $stub;
+        // Jangan tambahkan tag PHP pembuka agar editor tidak mendeteksi syntax error pada @directive
+        $finalContent = $stub;
 
 
         if (file_put_contents($filePath, $finalContent) === false) {
