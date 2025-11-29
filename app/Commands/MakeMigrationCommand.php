@@ -9,7 +9,7 @@ class MakeMigrationCommand extends Command {
     protected $description = 'Membuat file migrasi untuk membuat atau menghapus tabel baru';
 
     public function handle(array $args = []) {
-        $command = $args['command'] ?? 'buat:tabel';
+        $command = $args['command_name'] ?? 'buat:tabel';
         $name = $args[0] ?? null;
 
         if (empty($name)) {
