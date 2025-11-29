@@ -17,11 +17,11 @@ class HelpCommand extends Command {
         echo "\033[1;33mAvailable Commands:\033[0m\n\n";
 
         $this->printGroup('Structure Presets (Scaffolding)', [
-            'buat:mvc'      => 'Membuat struktur MVC standar (Controllers, Models, Views).',
-            'buat:adr'      => 'Membuat struktur ADR (Action, Domain, Responder).',
-            'buat:ddd'      => 'Membuat struktur DDD (Domain, Application, Infrastructure).',
-            'buat:hmvc'     => 'Membuat struktur Modular/HMVC (app/Modules).',
-            'buat:minimal'  => 'Membuat struktur Minimal (Hanya Routes & Public).',
+            'buat:mvc'      => 'Membuat struktur MVC standar.',
+            'buat:adr'      => 'Membuat struktur ADR (Action-Domain-Responder).',
+            'buat:ddd'      => 'Membuat struktur DDD (Domain-Driven Design).',
+            'buat:hmvc'     => 'Membuat struktur Modular/HMVC.',
+            'buat:minimal'  => 'Membuat struktur Minimal (Microservice).',
         ]);
 
         $this->printGroup('Structure Management', [
@@ -33,28 +33,31 @@ class HelpCommand extends Command {
         ]);
 
         $this->printGroup('Generators', [
-            'buat:controller <Nama>' => 'Membuat class Controller baru.',
+            'buat:controller <Nama>' => 'Membuat Controller baru.',
             'buat:model <Nama> [-t]' => 'Membuat Model baru (-t untuk +migrasi).',
-            'buat:view <nama.view>'  => 'Membuat file View (bisa dot notation).',
+            'buat:view <nama.view>'  => 'Membuat View baru (bisa dot notation).',
             'buat:middleware <Nama>' => 'Membuat Middleware baru.',
             'buat:modul <Nama>'      => 'Membuat Modul baru (khusus HMVC).',
         ]);
 
-        $this->printGroup('Database', [
-            'migrasi'                => 'Menjalankan migrasi database yang tertunda.',
-            'buat:tabel <nama>'      => 'Membuat file migrasi tabel baru.',
-            'buat:hapus_tabel <nama>'=> 'Membuat file migrasi drop tabel.',
+        $this->printGroup('Database & Queue', [
+            'migrasi'                => 'Menjalankan migrasi database.',
+            'buat:tabel <nama>'      => 'Membuat migrasi tabel baru.',
+            'buat:jobs'              => 'Membuat tabel jobs untuk antrean (Queue).',
+            'queue:work'             => 'Menjalankan worker untuk memproses antrean.',
+            'buat:hapus_tabel <nama>'=> 'Membuat migrasi drop tabel.',
         ]);
 
         $this->printGroup('Desktop & Mobile App', [
-            'buat:exe'       => 'Build aplikasi web menjadi Desktop App portable.',
+            'buat:exe'       => 'Build aplikasi menjadi Desktop App portable.',
             'buat:hapus_exe' => 'Menghapus hasil build desktop.',
-            'buat:pwa'       => 'Konfigurasi Mobile PWA (Manifest & Service Worker).',
+            'buat:pwa'       => 'Konfigurasi Mobile PWA (Manifest, Icon, Service Worker).',
         ]);
 
-        $this->printGroup('General', [
+        $this->printGroup('General & Testing', [
             'serve'          => 'Menjalankan server development PHP.',
-            'cache:clear'    => 'Menghapus cache view yang dikompilasi.',
+            'test'           => 'Menjalankan unit testing aplikasi.',
+            'cache:clear'    => 'Menghapus cache view.',
             'help'           => 'Menampilkan bantuan ini.',
         ]);
         
