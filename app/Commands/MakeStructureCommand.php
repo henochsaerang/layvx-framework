@@ -49,6 +49,50 @@ class MakeStructureCommand extends Command
         
         // Wajib membuat middleware karena Kernel.php mereferensikannya secara global
         $this->createCsrfMiddleware();
+
+        // Buat juga migrasi untuk tabel jobs
+        $this->createJobsMigration();
+    }
+
+    private function createJobsMigration()
+    {
+        $timestamp = date('Y_m_d_His');
+        $filename = "{$timestamp}_create_jobs_table.php";
+        $path = 'database/tabel/' . $filename;
+
+        $content = <<<PHP
+<?php
+
+use App\Core\Migration;
+use App\Core\Column;
+
+class CreateJobsTable extends Migration
+{
+    public function up()
+    {
+        \$this->createTable('jobs', [
+            (new Column('id'))->id(),
+            (new Column('queue'))->string()->notNullable()->default('default'),
+            (new Column('payload'))->text()->notNullable(), // Use TEXT for longtext/json
+            (new Column('attempts'))->integer()->notNullable()->default(0), // No tinyInt, use integer
+            (new Column('available_at'))->timestamp()->nullable(),
+            (new Column('created_at'))->timestamp()->notNullable()->default('CURRENT_TIMESTAMP')
+        ]);
+    }
+
+    public function down()
+    {
+        \$this->dropTable('jobs');
+    }
+}
+PHP;
+
+        if (file_put_contents($path, $content) === false) {
+            echo "Error: Gagal membuat file migrasi jobs.\n";
+            return;
+        }
+
+        echo "File dibuat: {$path}\n";
     }
 
     private function createCsrfMiddleware()

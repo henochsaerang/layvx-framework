@@ -1,96 +1,152 @@
-
 # LayVX Framework
 
-LayVX adalah sebuah **PHP framework MVC** (Model-View-Controller) ringan yang dirancang untuk pengembangan aplikasi web yang cepat dan terstruktur. Framework ini mendukung instalasi **Minimal Setup** melalui alat CLI yang efisien.
+![LayVX Banner](https://via.placeholder.com/800x200?text=LayVX+Framework)
+
+**LayVX** adalah Framework PHP revolusioner dengan filosofi **"Zero Dependency"** (Tanpa Composer). Framework ini dirancang untuk menjadi sangat fleksibel, ringan, namun memiliki fitur setara framework enterprise.
+
+LayVX mampu mengubah kode Anda menjadi **Web**, **Aplikasi Desktop (.exe)**, hingga **Aplikasi Mobile (PWA)** hanya dengan satu baris perintah.
 
 ---
 
-## Fitur Utama
+### 👨‍💻 Tentang Pengembang
 
-* **Arsitektur MVC**: Menyediakan pemisahan yang jelas antara logika bisnis, presentasi, dan data.
-* **Service Container & Dependency Injection**: Manajemen dependensi yang kuat untuk kode yang lebih modular dan mudah diuji.
-* **Middleware Pipeline**: Sistem middleware yang fleksibel untuk memproses request HTTP sebelum dan sesudah mencapai controller.
-* **Manajemen Sesi Abstrak**: Class `App\Core\Session` untuk pengelolaan sesi yang aman dan fleksibel.
-* **ORM (Object-Relational Mapping)**: Interaksi database berbasis objek dengan pemetaan Model-ke-Tabel dan dukungan relasi dasar.
-* **Templating Engine**: Sintaks templating mirip Blade untuk tampilan yang bersih dan dinamis (lihat `App\Core\ViewCompiler.php`).
-* **Command Line Interface (CLI)**: Alat bantu `layvx` untuk mengotomatisasi tugas-tugas umum seperti membuat controller, model, dan menjalankan migrasi.
+Framework ini dikembangkan dengan ❤️ dan ☕ oleh:
 
+> **Henoch Saerang** > Mahasiswa Semester 5, Teknik Informatika  
+> Universitas Negeri Manado (UNIMA)
 
-## Instalasi & Setup Cepat (Minimal Setup)
+---
 
-LayVX mendukung instalasi minimalis. Setelah mengklon repositori, Anda dapat menggunakan perintah `buat:mvc` untuk membuat semua folder struktur aplikasi yang diperlukan.
+## 🚀 Mengapa LayVX?
 
-### 1. Clone Repositori & Persiapan
+* **Zero Dependency:** Tidak butuh `composer install`. Download dan langsung jalan di mana saja.
+* **Multi-Platform:** Satu basis kode untuk Web, Desktop (Windows), dan Mobile (Android).
+* **Dynamic Scaffolding:** Bisa berubah wujud menjadi MVC, HMVC, ADR, DDD, atau Minimal API.
+* **Enterprise Ready:** Dilengkapi Built-in Queue, Caching, Testing, dan Security.
+* **Portable:** Sangat mudah dipindahkan antar server atau komputer tanpa konfigurasi rumit.
+
+---
+
+## 📦 Instalasi
+
+1.  **Clone Repositori:**
+    ```bash
+    git clone [https://github.com/henochsaerang/layvx-framework](https://github.com/henochsaerang/layvx-framework) namaproject
+    cd namaproject
+    ```
+
+2.  **Pilih Struktur (Preset):**
+    Pilih arsitektur yang Anda inginkan (lihat bagian Dynamic Scaffolding).
+    ```bash
+    layvx buat:mvc
+    ```
+
+3.  **Setup Database:**
+    Edit file `.env` dan jalankan migrasi.
+    ```bash
+    layvx migrasi
+    ```
+
+4.  **Jalankan:**
+    ```bash
+    layvx serve
+    ```
+
+---
+
+## 🛠️ Dynamic Scaffolding (Arsitektur Bunglon)
+
+LayVX tidak memaksakan satu struktur. Anda bisa memilih "baju" untuk proyek Anda:
+
+| Perintah | Deskripsi | Cocok Untuk |
+| :--- | :--- | :--- |
+| `layvx buat:mvc` | Struktur Standar (Controller, Model, View). | Web umum, Blog, Toko Online. |
+| `layvx buat:hmvc` | Hierarchical MVC (Modular). | Aplikasi skala besar, Tim banyak. |
+| `layvx buat:adr` | Action-Domain-Responder. | API-Centric App, Modern Web. |
+| `layvx buat:ddd` | Domain-Driven Design. | Aplikasi Enterprise Kompleks. |
+| `layvx buat:minimal` | Struktur mikro (Hanya Route). | Microservices, API Sederhana. |
+
+*Ingin ganti struktur? Gunakan `layvx buat:hapus_mvc` (atau sesuai tipe) lalu buat yang baru.*
+
+---
+
+## 📱 Multi-Platform Build
+
+Fitur andalan LayVX yang jarang dimiliki framework lain:
+
+### 1. 🖥️ Build ke Desktop (.exe)
+Mengubah web Anda menjadi aplikasi desktop portable dengan mode kiosk (tanpa address bar).
 ```bash
-git clone https://github.com/henochsaerang/layvx-framework namaproject
-cd namaproject
-````
+layvx buat:exe
+```
+*Hasil build ada di folder `build_desktop/`. Salin folder `php` ke dalamnya untuk membuatnya 100% portable tanpa instalasi.*
 
-### 2\. Buat Struktur MVC Otomatis
-
-Perintah ini akan membuat semua folder yang hilang (`public`, `routes`, `views`, `app/Controllers`, `app/Models`, dll.) serta file bootstrap penting (`index.php`, `web.php`, `AppServiceProvider.php`).
-
+### 2. 📱 Build ke Mobile (PWA)
+Mengonfigurasi manifest dan service worker agar web bisa diinstal di Android (Add to Home Screen).
 ```bash
-layvx buat:mvc
+layvx buat:pwa
+```
+*Otomatis men-generate icon aplikasi, manifest.json, dan halaman offline.*
+
+---
+
+## 🔥 Fitur Enterprise (Native)
+
+Meski tanpa library luar, LayVX memiliki fitur canggih buatan sendiri:
+
+### 🛡️ Keamanan (Security)
+* **CSRF Protection:** Middleware otomatis mencegah serangan Cross-Site Request Forgery.
+* **XSS Cleaning:** Sanitasi input otomatis lewat `$request->clean()`.
+* **Custom Error Pages:** Tampilan cantik untuk error 404 dan 419 (Page Expired).
+
+### 📨 Queue System (Antrean)
+Proses tugas berat di latar belakang tanpa membebani user.
+1.  Buat tabel jobs: `layvx buat:jobs` -> `layvx migrasi`
+2.  Push job: `Queue::push(KirimEmailJob::class, $data)`
+3.  Jalankan worker: `layvx queue:work`
+
+### ⚡ Caching System
+Simpan data berat ke file cache untuk performa kilat.
+```php
+$users = Cache::remember('all_users', 3600, function() {
+    return User::all();
+});
 ```
 
-### 3\. Konfigurasi Environment
-
-Isi detail koneksi database dan pengaturan aplikasi lainnya pada file `.env` di root proyek Anda.
-
-```env
-APP_ENV=development
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=layvx_db
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-### 4\. Setup Database
-
-Buat database dengan nama yang sesuai dengan konfigurasi Anda (e.g., `layvx_db`). Jalankan migrasi untuk membuat tabel:
-
+### 🧪 Automated Testing
+Pastikan aplikasi stabil sebelum rilis.
 ```bash
-layvx migrasi
+layvx test
 ```
 
------
+---
 
-## Penggunaan Dasar
+## 📖 CLI Command Cheat Sheet
 
-### Menjalankan Server Pengembangan
+Berikut adalah daftar perintah `layvx` yang bisa Anda gunakan:
 
-Gunakan perintah `serve` untuk menjalankan aplikasi pada server pengembangan internal PHP.
+**Generator:**
+* `buat:controller <Nama>`
+* `buat:model <Nama> -t` (dengan migrasi)
+* `buat:view <nama.view>`
+* `buat:modul <Nama>` (Khusus HMVC)
+* `buat:middleware <Nama>`
 
-```bash
-layvx serve
-```
+**Database:**
+* `buat:tabel <nama>`
+* `migrasi`
+* `buat:jobs` (Tabel Queue)
 
-Aplikasi Anda akan dapat diakses di `http://127.0.0.1:8000`.
+**Utility:**
+* `serve` (Jalankan Server)
+* `cache:clear` (Hapus Cache View)
+* `buat:hapus_exe` (Hapus build desktop)
 
------
+---
 
-## Command Line Interface (CLI)
+## 📄 Lisensi
 
-LayVX CLI (`layvx`) menyediakan perintah untuk manajemen kode dan struktur:
+LayVX adalah software open-source di bawah lisensi **MIT**.
 
-| Perintah | Deskripsi |
-| :--- | :--- |
-| `buat:mvc` | Membuat semua direktori struktur MVC yang hilang. |
-| `buat:reset_mvc` | Menghapus dan membuat ulang (reset) semua direktori struktur MVC. |
-| `serve` | Menjalankan server pengembangan PHP. |
-| `buat:controller <Nama>` | Membuat class Controller baru di `app/Controllers`. |
-| `buat:model <Nama> -t` | Membuat class Model baru di `app/Models` (gunakan `-t` untuk membuat migrasi juga). |
-| `buat:middleware <Nama>` | Membuat class Middleware baru di `app/Middleware`. |
-| `buat:view <Nama>` | Membuat file View baru di `views/` (mendukung dot notation, e.g., `auth.login`). |
-| `buat:tabel <nama>` | Membuat file migrasi baru untuk membuat tabel. |
-| `migrasi` | Menjalankan migrasi database yang tertunda. |
-| `cache:clear` | Menghapus semua file cache view yang dikompilasi. |
-
------
-
-## Lisensi
-
-Proyek ini dilisensikan di bawah [MIT License](./LICENSE).
+---
+*Copyright © 2025 Henoch Saerang. All Rights Reserved.*
