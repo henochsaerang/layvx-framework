@@ -17,6 +17,7 @@ use App\Commands\MakeModuleCommand;
 use App\Commands\MakeExeCommand;
 use App\Commands\DeleteExeCommand;
 use App\Commands\MakePwaCommand;
+use App\Middleware\VerifyCsrfToken;
 
 class Kernel {
     /** The application's global HTTP middleware stack. 
@@ -25,7 +26,7 @@ class Kernel {
      * atau file VerifyCsrfToken harus dibuat ulang menggunakan `layvx buat:middleware VerifyCsrfToken`.
      */
     protected $globalMiddleware = [
-        // \App\Middleware\VerifyCsrfToken::class, // Dihapus karena filenya mungkin hilang
+        VerifyCsrfToken::class,
     ];
 
     /** The application's route middleware groups. */
