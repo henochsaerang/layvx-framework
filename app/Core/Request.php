@@ -102,6 +102,18 @@ class Request {
     }
 
     /**
+     * Get a sanitized value from the request body (POST or JSON) to prevent XSS.
+     *
+     * @param string $key
+     * @param mixed $default
+     * @return mixed
+     */
+    public function clean(string $key, $default = null) {
+        $value = $this->postParams[$key] ?? $default;
+        return is_string($value) ? htmlspecialchars($value, ENT_QUOTES, 'UTF-8') : $value;
+    }
+
+    /**
      * Get all input from the request body.
      * @return array
      */

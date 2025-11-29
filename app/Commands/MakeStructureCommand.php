@@ -46,6 +46,52 @@ class MakeStructureCommand extends Command
         $this->createIndexFile();
         $this->createRoutesFile($type);
         $this->createAppServiceProvider();
+        
+        // Wajib membuat middleware karena Kernel.php mereferensikannya secara global
+        $this->createCsrfMiddleware();
+    }
+
+    private function createCsrfMiddleware()
+    {
+        if (!is_dir('app/Middleware')) {
+            mkdir('app/Middleware', 0755, true);
+        }
+
+        $content = <<<'PHP'
+<?php
+
+namespace App\Middleware;
+
+use App\Core\Middleware;
+use App\Core\Request;
+use App\Core\Session;
+use App\Core\Response;
+use Closure;
+
+class VerifyCsrfToken implements Middleware
+{
+    public function handle(Request $request, Closure $next)
+    {
+        Session::start();
+
+        if (in_array($request->method(), ['GET', 'HEAD', 'OPTIONS'])) {
+            return $next($request);
+        }
+
+        $token = $request->input('tuama_token');
+        $sessionToken = Session::token();
+
+        if (is_null($token) || is_null($sessionToken) || !hash_equals($sessionToken, $token)) {
+            // Tampilkan halaman error 419 yang cantik
+            return Response::view('errors.419', [], 419);
+        }
+
+        return $next($request);
+    }
+}
+PHP;
+        file_put_contents('app/Middleware/VerifyCsrfToken.php', $content);
+        echo "File dibuat: app/Middleware/VerifyCsrfToken.php\n";
     }
 
     private function createIndexFile()
