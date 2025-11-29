@@ -44,6 +44,12 @@ class StructureDefinitions
                     'app/Infrastructure'
                 ]);
 
+            case 'hmvc':
+                return array_merge($common, [
+                    'app/Modules',
+                    'views'
+                ]);
+
             case 'minimal':
                 return $common;
 
