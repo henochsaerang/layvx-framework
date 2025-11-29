@@ -9,11 +9,10 @@ use App\Commands\MakeMigrationCommand;
 use App\Commands\MakeModelCommand;
 use App\Commands\MigrateCommand;
 use App\Commands\ServeCommand;
-use App\Commands\MakeMvcCommand;
-use App\Commands\DeleteMvcCommand;
-use App\Commands\ResetMvcCommand;
 use App\Commands\MakeMiddlewareCommand;
 use App\Commands\MakeViewCommand;
+use App\Commands\MakeStructureCommand;
+use App\Commands\DeleteStructureCommand;
 
 class Kernel {
     /** The application's global HTTP middleware stack. 
@@ -32,19 +31,28 @@ class Kernel {
 
     /** The registered console commands. */
     protected $commands = [
+        'help' => HelpCommand::class,
         'serve' => ServeCommand::class,
         'cache:clear' => CacheClearCommand::class,
+        'migrasi' => MigrateCommand::class,
+        
+        // Make commands
         'buat:controller' => MakeControllerCommand::class,
         'buat:model' => MakeModelCommand::class,
         'buat:middleware' => MakeMiddlewareCommand::class,
         'buat:view' => MakeViewCommand::class,
         'buat:tabel' => MakeMigrationCommand::class,
         'buat:hapus_tabel' => MakeMigrationCommand::class,
-        'migrasi' => MigrateCommand::class,
-        'help' => HelpCommand::class,
-        'buat:mvc' => MakeMvcCommand::class,
-        'buat:hapus_mvc' => DeleteMvcCommand::class,
-        'buat:reset_mvc' => ResetMvcCommand::class,
+        
+        // Dynamic Structure Scaffolding
+        'buat:mvc' => MakeStructureCommand::class,
+        'buat:adr' => MakeStructureCommand::class,
+        'buat:ddd' => MakeStructureCommand::class,
+        'buat:minimal' => MakeStructureCommand::class,
+        'buat:hapus_mvc' => \App\Commands\DeleteStructureCommand::class,
+        'buat:hapus_adr' => \App\Commands\DeleteStructureCommand::class,
+        'buat:hapus_minimal' => \App\Commands\DeleteStructureCommand::class,
+        'buat:hapus_ddd' => \App\Commands\DeleteStructureCommand::class,
     ];
 
     /** The application container. */
@@ -139,22 +147,30 @@ class Kernel {
      */
     public function handleConsole($argv) {
         $commandName = $argv[1] ?? 'help';
-        $args = array_slice($argv, 2);
-
+        $rawArgs = array_slice($argv, 2);
+    
+        $args = [];
+        foreach ($rawArgs as $arg) {
+            if (strpos($arg, '=') !== false) {
+                list($key, $value) = explode('=', $arg, 2);
+                $args[$key] = $value;
+            } else {
+                $args[] = $arg;
+            }
+        }
+    
         if (!isset($this->commands[$commandName])) {
             echo "Error: Command '{$commandName}' not found.\n";
-            (new HelpCommand())->handle();
+            (new HelpCommand($this))->handle([]);
             exit(1);
         }
-
+    
         $commandClass = $this->commands[$commandName];
-        $commandInstance = new $commandClass();
-
-        // A bit of a hack to pass the command name to the migration creator
-        if ($commandName === 'buat:hapus_tabel') {
-            $args['command'] = 'buat:hapus_tabel';
-        }
-
+        $commandInstance = new $commandClass($this);
+    
+        // Inject the command name into the arguments array so the handler knows which command was called.
+        $args['command_name'] = $commandName;
+    
         $commandInstance->handle($args);
     }
 
