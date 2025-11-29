@@ -36,10 +36,6 @@ if (file_exists($configPath)) {
             // Pilihan yang lebih aman: hanya memuat yang dapat di-autoloader
             if (class_exists($providerClass)) {
                 $providersToLoad[] = $providerClass;
-            } else {
-                // Jika AppServiceProvider tidak ditemukan, dan kita tahu ini adalah setup awal,
-                // kita biarkan `buat:mvc` yang membuatnya.
-                error_log("Warning: Skipping provider '{$providerClass}' as class file is missing.");
             }
         }
     }

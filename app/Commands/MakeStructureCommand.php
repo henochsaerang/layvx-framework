@@ -7,9 +7,9 @@ use App\Core\StructureDefinitions;
 
 class MakeStructureCommand extends Command
 {
-    protected string $description = 'Create a new project structure (mvc, adr, ddd, minimal).';
+    protected $description = 'Create a new project structure (mvc, adr, ddd, minimal).';
 
-    public function handle(array $args)
+    public function handle(array $args = [])
     {
         $commandName = $args['command_name'] ?? '';
         $parts = explode(':', $commandName);

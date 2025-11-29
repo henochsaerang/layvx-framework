@@ -7,9 +7,9 @@ use App\Core\StructureDefinitions;
 
 class DeleteStructureCommand extends Command
 {
-    protected string $description = 'Delete a project structure (mvc, adr, minimal).';
+    protected $description = 'Delete a project structure (mvc, adr, minimal).';
 
-    public function handle(array $args)
+    public function handle(array $args = [])
     {
         $commandName = $args['command_name'] ?? '';
         $parts = explode(':', $commandName);
