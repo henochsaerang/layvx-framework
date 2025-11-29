@@ -50,19 +50,62 @@ class MakeStructureCommand extends Command
 
     private function createIndexFile()
     {
-        $content = <<<PHP
+        $content = <<<'PHP'
 <?php
 
-require_once __DIR__ . '/../vendor/autoload.php';
-require_once __DIR__ . '/../routes/web.php';
+// public/index.php
 
 use App\Core\App;
+use App\Core\Container;
+use App\Core\Request;
+use App\Core\Response;
+use App\Core\Router;
+use App\Core\Session;
 
-// Run the application
-App::run();
+// 1. Load Environment & Autoloader Internal
+require_once '../app/Core/Env.php';
+\App\Core\Env::load(__DIR__ . '/..');
+
+require_once '../app/Core/autoloader.php';
+
+// 2. Setup Container
+$container = new Container();
+App::setContainer($container);
+
+// 3. Load Providers
+$providers = require __DIR__ . '/../config/app.php';
+if (isset($providers['providers'])) {
+    foreach ($providers['providers'] as $providerClass) {
+        if (class_exists($providerClass)) {
+            (new $providerClass($container))->register();
+        }
+    }
+}
+
+// 4. Register Handlers & Helpers
+require_once '../app/Core/ErrorHandler.php';
+\App\Core\ErrorHandler::register();
+
+require_once '../app/Core/helpers.php';
+
+// 5. Start Session
+Session::start();
+if (!Session::has('tuama_token')) {
+    Session::regenerateToken();
+}
+
+// 6. Handle Request
+\App\Core\Route::load('../routes/web.php');
+
+$request = $container->resolve(Request::class);
+$kernel = new \App\Core\Kernel($container, $container->resolve(Router::class));
+$response = $kernel->handleRequest($request);
+
+$response->send();
 PHP;
+
         file_put_contents('public/index.php', $content);
-        echo "File dibuat: public/index.php\n";
+        echo "File dibuat: public/index.php (Zero Dependency Mode)\n";
     }
 
     private function createRoutesFile(string $type)
@@ -88,27 +131,57 @@ PHP;
 
     private function createAppServiceProvider()
     {
-        $content = <<<PHP
+        $content = <<<'PHP'
 <?php
 
 namespace App\Providers;
 
 use App\Core\ServiceProvider;
+use App\Core\Container;
+use App\Core\Request;
+use App\Core\Router;
+use PDO;
+use PDOException;
 
 class AppServiceProvider extends ServiceProvider
 {
+    /**
+     * Register any application services.
+     */
     public function register()
     {
-        //
-    }
+        // 1. Bind Router & Request
+        $this->container->singleton(Router::class, function (Container $container) {
+            return new Router($container->resolve(Request::class));
+        });
 
-    public function boot()
-    {
-        //
+        $this->container->singleton(Request::class, function () {
+            return Request::capture();
+        });
+
+        // 2. Bind Database Connection
+        $this->container->singleton(PDO::class, function () {
+            $driver = config('database.driver', 'mysql');
+            $host = config('database.host', $_ENV['DB_HOST'] ?? '127.0.0.1');
+            $dbName = config('database.db_name', 'layvx_db');
+            $dbUser = config('database.db_user', 'root');
+            $dbPass = config('database.db_pass', '');
+            
+            $dsn = "mysql:host={$host};dbname={$dbName};charset=utf8mb4";
+
+            try {
+                $pdo = new PDO($dsn, $dbUser, $dbPass);
+                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+                return $pdo;
+            } catch (PDOException $e) {
+                throw $e;
+            }
+        });
     }
 }
 PHP;
         file_put_contents('app/Providers/AppServiceProvider.php', $content);
-        echo "File dibuat: app/Providers/AppServiceProvider.php\n";
+        echo "File dibuat: app/Providers/AppServiceProvider.php (Database Ready)\n";
     }
 }
