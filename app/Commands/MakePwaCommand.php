@@ -21,17 +21,27 @@ class MakePwaCommand extends Command
             return 1;
         }
 
-        // 2. Generate manifest.json
+        // 2. Generate icon placeholder
+        $iconDir = $publicDir . '/assets/img/icons';
+        if (!is_dir($iconDir)) {
+            mkdir($iconDir, 0755, true);
+        }
+        echo "Membuat icon placeholder..." . "\n";
+        $this->generateIconFile($iconDir . '/icon-192x192.png', 192, 'L');
+        $this->generateIconFile($iconDir . '/icon-512x512.png', 512, 'LayVX');
+        
+
+        // 3. Generate manifest.json
         echo "Membuat public/manifest.json..." . "\n";
         $manifestContent = $this->getManifestContent();
         file_put_contents($publicDir . '/manifest.json', $manifestContent);
 
-        // 3. Generate service-worker.js
+        // 4. Generate service-worker.js
         echo "Membuat public/service-worker.js..." . "\n";
         $swContent = $this->getServiceWorkerContent();
         file_put_contents($publicDir . '/service-worker.js', $swContent);
         
-        // 4. Generate offline.html
+        // 5. Generate offline.html
         if (!is_dir($viewsDir)) {
             mkdir($viewsDir, 0755, true);
         }
@@ -39,8 +49,9 @@ class MakePwaCommand extends Command
         $offlinePageContent = $this->getOfflinePageContent();
         file_put_contents($viewsDir . '/offline.html', $offlinePageContent);
         
-        // 5. Output instruksi
+        // 6. Output instruksi
         echo "\n\033[32mPWA berhasil dikonfigurasi!\033[0m\n";
+        echo "Icon placeholder berhasil dibuat di public/assets/img/icons/\n";
         echo "Tambahkan kode berikut di dalam tag <head> pada file layout utama Anda (misal: views/layouts/app.php):\n\n";
         echo "--------------------------------------------------------------------------------\n";
         echo '<link rel="manifest" href="/manifest.json">' . "\n";
@@ -48,6 +59,37 @@ class MakePwaCommand extends Command
         echo "--------------------------------------------------------------------------------\n";
 
         return 0;
+    }
+
+    private function generateIconFile(string $path, int $size, string $text)
+    {
+        if (!extension_loaded('gd')) {
+            echo "Peringatan: GD Library tidak aktif, skip pembuatan icon di '{$path}'." . "\n";
+            return;
+        }
+
+        $image = imagecreatetruecolor($size, $size);
+        
+        // Warna background biru
+        $bg_color = imagecolorallocate($image, 59, 130, 246); 
+        imagefill($image, 0, 0, $bg_color);
+        
+        // Warna teks putih
+        $text_color = imagecolorallocate($image, 255, 255, 255);
+        
+        // Gunakan font built-in terbesar (nomor 5)
+        $font = 5;
+        $font_width = imagefontwidth($font);
+        $font_height = imagefontheight($font);
+        
+        // Kalkulasi posisi tengah
+        $x = ($size - ($font_width * strlen($text))) / 2;
+        $y = ($size - $font_height) / 2;
+        
+        imagestring($image, $font, $x, $y, $text, $text_color);
+        
+        imagepng($image, $path);
+        imagedestroy($image);
     }
 
     private function getManifestContent(): string
