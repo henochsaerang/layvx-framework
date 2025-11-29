@@ -46,9 +46,10 @@ class HelpCommand extends Command {
             'buat:hapus_tabel <nama>'=> 'Membuat file migrasi drop tabel.',
         ]);
 
-        $this->printGroup('Desktop App (Experimental)', [
+        $this->printGroup('Desktop & Mobile App', [
             'buat:exe'       => 'Build aplikasi web menjadi Desktop App portable.',
             'buat:hapus_exe' => 'Menghapus hasil build desktop.',
+            'buat:pwa'       => 'Konfigurasi Mobile PWA (Manifest & Service Worker).',
         ]);
 
         $this->printGroup('General', [
