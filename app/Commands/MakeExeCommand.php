@@ -12,16 +12,16 @@ class MakeExeCommand extends Command
     protected $signature = 'buat:exe';
     protected $description = 'Membangun aplikasi menjadi paket portable (Desktop App)';
 
-    public function handle()
+    public function handle(array $args = [])
     {
-        $this->info('Memulai proses build aplikasi desktop...');
+        echo 'Memulai proses build aplikasi desktop...' . "\n";
 
         $rootDir = dirname(__DIR__, 2);
         $buildDir = $rootDir . '/build_desktop';
 
         // 1. Buat atau bersihkan folder build
         if (is_dir($buildDir)) {
-            $this->info("Folder 'build_desktop' sudah ada. Membersihkan folder...");
+            echo "Folder 'build_desktop' sudah ada. Membersihkan folder..." . "\n";
             $this->deleteDirectory($buildDir);
         }
         mkdir($buildDir, 0755, true);
@@ -32,7 +32,7 @@ class MakeExeCommand extends Command
             $source = $rootDir . '/' . $item;
             $destination = $buildDir . '/' . $item;
             if (is_dir($source)) {
-                $this->info("Menyalin folder '{$item}'...");
+                echo "Menyalin folder '{$item}'..." . "\n";
                 $this->recursiveCopy($source, $destination);
             }
         }
@@ -40,19 +40,19 @@ class MakeExeCommand extends Command
         // Salin file .env
         $envFile = $rootDir . '/.env';
         if (file_exists($envFile)) {
-            $this->info("Menyalin file '.env'...");
+            echo "Menyalin file '.env'..." . "\n";
             copy($envFile, $buildDir . '/.env');
         }
 
         // 3. Buat launcher script
-        $this->info('Membuat launcher script (LayVX_App.bat)...');
+        echo 'Membuat launcher script (LayVX_App.bat)...' . "\n";
         $batchContent = $this->getBatchScriptContent();
         file_put_contents($buildDir . '/LayVX_App.bat', $batchContent);
 
         // 4. Beri output ke user
-        $this->info('');
-        $this->info("\033[32mBuild selesai di folder 'build_desktop'.\033[0m");
-        $this->info('Untuk membuatnya 100% portable, salin folder instalasi PHP Anda ke dalam direktori tersebut.');
+        echo '' . "\n";
+        echo "\033[32mBuild selesai di folder 'build_desktop'.\033[0m" . "\n";
+        echo 'Untuk membuatnya 100% portable, salin folder instalasi PHP Anda ke dalam direktori tersebut.' . "\n";
     }
 
     private function getBatchScriptContent(): string

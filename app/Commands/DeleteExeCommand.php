@@ -12,19 +12,19 @@ class DeleteExeCommand extends Command
     protected $signature = 'buat:hapus_exe';
     protected $description = 'Menghapus folder build aplikasi desktop (build_desktop).';
 
-    public function handle()
+    public function handle(array $args = [])
     {
         $rootDir = dirname(__DIR__, 2);
         $buildDir = $rootDir . '/build_desktop';
 
         if (!is_dir($buildDir)) {
-            $this->info('Tidak ditemukan folder build desktop.');
+            echo 'Tidak ditemukan folder build desktop.' . "\n";
             return;
         }
 
-        $this->info("Menghapus folder '{$buildDir}'...");
+        echo "Menghapus folder '{$buildDir}'..." . "\n";
         $this->deleteDirectory($buildDir);
-        $this->info("\033[32mBuild desktop berhasil dihapus. Aplikasi kembali bersih.\033[0m");
+        echo "\033[32mBuild desktop berhasil dihapus. Aplikasi kembali bersih.\033[0m" . "\n";
     }
 
     private function deleteDirectory(string $dir)
