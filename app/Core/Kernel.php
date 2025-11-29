@@ -13,6 +13,7 @@ use App\Commands\MakeMiddlewareCommand;
 use App\Commands\MakeViewCommand;
 use App\Commands\MakeStructureCommand;
 use App\Commands\DeleteStructureCommand;
+use App\Commands\MakeModuleCommand;
 
 class Kernel {
     /** The application's global HTTP middleware stack. 
@@ -43,16 +44,19 @@ class Kernel {
         'buat:view' => MakeViewCommand::class,
         'buat:tabel' => MakeMigrationCommand::class,
         'buat:hapus_tabel' => MakeMigrationCommand::class,
+        'buat:modul' => MakeModuleCommand::class,
         
         // Dynamic Structure Scaffolding
         'buat:mvc' => MakeStructureCommand::class,
         'buat:adr' => MakeStructureCommand::class,
         'buat:ddd' => MakeStructureCommand::class,
+        'buat:hmvc' => MakeStructureCommand::class,
         'buat:minimal' => MakeStructureCommand::class,
         'buat:hapus_mvc' => \App\Commands\DeleteStructureCommand::class,
         'buat:hapus_adr' => \App\Commands\DeleteStructureCommand::class,
         'buat:hapus_minimal' => \App\Commands\DeleteStructureCommand::class,
         'buat:hapus_ddd' => \App\Commands\DeleteStructureCommand::class,
+        'buat:hapus_hmvc' => \App\Commands\DeleteStructureCommand::class,
     ];
 
     /** The application container. */
