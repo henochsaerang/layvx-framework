@@ -39,9 +39,9 @@ class StructureDefinitions
             
             case 'ddd':
                 return array_merge($common, [
-                    'src/Domain',
-                    'src/Application',
-                    'src/Infrastructure'
+                    'app/Domain',
+                    'app/Application',
+                    'app/Infrastructure'
                 ]);
 
             case 'minimal':
