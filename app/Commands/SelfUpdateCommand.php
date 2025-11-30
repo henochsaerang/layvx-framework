@@ -61,8 +61,8 @@ class SelfUpdateCommand extends Command
         $this->info("Memulai proses pembaruan file core...");
 
         $targets = [
-            'app/Core',
-            'app/Commands',
+            'app/Core',       // Aman untuk diganti total
+            'app/Commands',   // HATI-HATI: Jangan hapus folder ini, hanya timpa file
             'layvx/layvx',
         ];
 
@@ -71,27 +71,22 @@ class SelfUpdateCommand extends Command
                 $source = $sourcePath . '/' . $target;
                 $destination = $basePath . '/' . $target;
 
-                if (!file_exists($source)) {
-                     $this->warning("Peringatan: source '{$target}' tidak ditemukan dalam pembaruan, dilewati.");
-                     continue;
-                }
+                if (!file_exists($source)) continue;
 
                 $this->info("Memperbarui '{$target}'...");
 
-                if (is_dir($destination)) {
-                    $this->deleteDirectory($destination);
-                } elseif (file_exists($destination)) {
-                    unlink($destination);
-                }
-                
-                if (is_dir($source)) {
-                    $this->copyDirectory($source, $destination);
+                if ($target === 'app/Commands') {
+                    // Smart Copy: Hanya timpa file bawaan framework, jangan hapus command user
+                    $this->smartCopy($source, $destination);
                 } else {
-                    copy($source, $destination);
+                    // Untuk Core, ganti total agar bersih
+                    if (is_dir($destination)) $this->deleteDirectory($destination);
+                    if (is_dir($source)) $this->copyDirectory($source, $destination);
+                    else copy($source, $destination);
                 }
             }
         } catch (\Exception $e) {
-            $this->error("Terjadi kesalahan saat mengganti file: " . $e->getMessage());
+            $this->error("Error: " . $e->getMessage());
             $this->cleanup($zipPath, $extractPath);
             return;
         }
@@ -142,6 +137,26 @@ class SelfUpdateCommand extends Command
                 $this->copyDirectory($sourcePath, $destPath);
             } else {
                 copy($sourcePath, $destPath);
+            }
+        }
+    }
+
+    private function smartCopy(string $source, string $dest) {
+        if (!is_dir($dest)) mkdir($dest, 0755, true);
+        
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($source, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+
+        foreach ($iterator as $item) {
+            $subPath = $iterator->getSubPathName();
+            $destPath = $dest . DIRECTORY_SEPARATOR . $subPath;
+            
+            if ($item->isDir()) {
+                if (!is_dir($destPath)) mkdir($destPath);
+            } else {
+                copy($item, $destPath);
             }
         }
     }

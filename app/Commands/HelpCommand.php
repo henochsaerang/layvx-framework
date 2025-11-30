@@ -57,6 +57,7 @@ class HelpCommand extends Command {
         $this->printGroup('General & Testing', [
             'serve'          => 'Menjalankan server development PHP.',
             'test'           => 'Menjalankan unit testing aplikasi.',
+            'self:update'    => 'Update framework ke versi terbaru (GitHub).',
             'cache:clear'    => 'Menghapus cache view.',
             'help'           => 'Menampilkan bantuan ini.',
         ]);
