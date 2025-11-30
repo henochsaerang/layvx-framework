@@ -39,6 +39,7 @@ class Kernel {
 
     /** The registered console commands. */
     protected $commands = [
+        'self:update' => \App\Commands\SelfUpdateCommand::class,
         'help' => HelpCommand::class,
         'serve' => ServeCommand::class,
         'cache:clear' => CacheClearCommand::class,
