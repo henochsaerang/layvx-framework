@@ -13,13 +13,13 @@ class MigrateCommand extends Command
 
     private $pdo;
 
-    public function __construct()
-    {
-        $this->pdo = App::getContainer()->resolve(PDO::class);
-    }
-
     public function handle(array $args = [])
     {
+        $this->checkAndCreateDatabase();
+
+        // Resolve PDO sekarang, karena database sudah pasti ada
+        $this->pdo = \App\Core\App::getContainer()->resolve(\PDO::class);
+
         $this->ensureMigrationsTableExists();
 
         $executedMigrations = $this->getExecutedMigrations();
@@ -37,6 +37,35 @@ class MigrateCommand extends Command
         }
 
         echo "Migrasi selesai.\n";
+    }
+
+    private function checkAndCreateDatabase()
+    {
+        $config = config('database');
+        $driver = $config['driver'];
+        $host = $config['host'];
+        $dbName = $config['database'];
+        $user = $config['username'];
+        $pass = $config['password'];
+
+        if ($driver !== 'mysql') {
+            // Saat ini, hanya mysql yang didukung untuk pembuatan otomatis
+            return;
+        }
+
+        try {
+            // Terhubung tanpa menentukan nama database
+            $tempPdo = new PDO("mysql:host=$host", $user, $pass);
+            $tempPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            // Buat database jika belum ada
+            $tempPdo->exec("CREATE DATABASE IF NOT EXISTS \`$dbName\`");
+
+            echo "Database '$dbName' siap.\n";
+        } catch (\PDOException $e) {
+            echo "Gagal terhubung ke server database: " . $e->getMessage() . "\n";
+            exit(1); // Keluar jika tidak bisa terhubung ke server DB
+        }
     }
 
     private function ensureMigrationsTableExists()
@@ -57,6 +86,9 @@ class MigrateCommand extends Command
     private function getMigrationFiles()
     {
         $migrationPath = __DIR__ . '/../../database/tabel';
+        if (!is_dir($migrationPath)) {
+            mkdir($migrationPath, 0777, true);
+        }
         $files = scandir($migrationPath);
         $phpFiles = array_filter($files, function ($file) {
             return pathinfo($file, PATHINFO_EXTENSION) === 'php';
@@ -92,8 +124,9 @@ class MigrateCommand extends Command
 
     private function getClassNameFromFileName($fileName)
     {
-        $fileNameWithoutExtension = substr($fileName, 0, -4);
-        $namePart = implode('_', array_slice(explode('_', $fileNameWithoutExtension), 4));
-        return str_replace('_', '', ucwords($namePart, '_'));
+        $fileNameWithoutExtension = pathinfo($fileName, PATHINFO_FILENAME);
+        // Hapus bagian tanggal dan waktu (misal: '2023_01_01_000000_')
+        $classNamePart = preg_replace('/^\d{4}_\d{2}_\d{2}_\d{6}_/', '', $fileNameWithoutExtension);
+        return str_replace('_', '', ucwords($classNamePart, '_'));
     }
 }
