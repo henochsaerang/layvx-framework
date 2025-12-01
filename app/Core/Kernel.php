@@ -53,6 +53,7 @@ class Kernel {
         'buat:middleware' => MakeMiddlewareCommand::class,
         'buat:view' => MakeViewCommand::class,
         'buat:tabel' => MakeMigrationCommand::class,
+        'buat:sql' => \App\Commands\DatabaseDumpCommand::class,
         'buat:jobs' => MakeJobsTableCommand::class,
         'buat:hapus_tabel' => MakeMigrationCommand::class,
         'buat:modul' => MakeModuleCommand::class,
