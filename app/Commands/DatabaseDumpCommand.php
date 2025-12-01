@@ -92,44 +92,38 @@ class DatabaseDumpCommand extends Command
 
     private function dumpTableData($handle, string $table)
     {
-        $stmt = $this->pdo->query("SELECT * FROM `{$table}`");
-        $rowCount = $stmt->rowCount();
+        // 1. Ambil nama kolom SEKALI SAJA di luar loop
+        $columnsString = $this->getColumnNames($table);
 
-        if ($rowCount === 0) {
+        // 2. Ambil data (gunakan unbuffered query untuk hemat RAM jika memungkinkan, tapi fetch biasa ok untuk sekarang)
+        $stmt = $this->pdo->query("SELECT * FROM `{$table}`");
+        $columnCount = $stmt->columnCount();
+        
+        // Cek jika kosong
+        if ($stmt->rowCount() === 0) {
             $stmt->closeCursor();
             return;
         }
 
         fwrite($handle, "--\n-- Membuang data untuk tabel `{$table}`\n--\n\n");
-        
-        $columnCount = $stmt->columnCount();
 
-        for ($i = 0; $i < $rowCount; $i++) {
-            $row = $stmt->fetch(PDO::FETCH_NUM);
-            
+        // 3. Loop Data
+        while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
             $values = [];
             for ($j = 0; $j < $columnCount; $j++) {
                 if ($row[$j] === null) {
                     $values[] = 'NULL';
                 } else {
-                    // Escape the value
+                    // Escape string agar aman saat di-import
                     $values[] = "'" . addslashes($row[$j]) . "'";
                 }
             }
-
-            $columnNames = array_map(function($meta) {
-                return '`' . $meta['name'] . '`';
-            }, array_filter($stmt->fetchAll(PDO::FETCH_ASSOC), function($key) use ($stmt, $columnCount){
-                $meta = $stmt->getColumnMeta($key);
-                return $meta['name'];
-            }, ARRAY_FILTER_USE_KEY));
             
-            $columnsString = $this->getColumnNames($table);
-
+            // Tulis baris INSERT
             fwrite($handle, "INSERT INTO `{$table}` ({$columnsString}) VALUES (" . implode(', ', $values) . ");\n");
         }
+        
         $stmt->closeCursor();
-
         fwrite($handle, "\n");
     }
 
