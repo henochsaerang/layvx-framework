@@ -14,7 +14,10 @@ class SelfUpdateCommand extends Command
 
     public function handle()
     {
-        $basePath = realpath(__DIR__ . '/../../..');
+        // PERBAIKAN: Gunakan dirname level 2 agar tepat di root project
+        // Dari: app/Commands/SelfUpdateCommand.php -> app/Commands -> app -> ROOT
+        $basePath = dirname(__DIR__, 2); 
+
         $zipPath = $basePath . '/storage/framework/update.zip';
         $extractPath = $basePath . '/storage/framework/update_temp';
 
