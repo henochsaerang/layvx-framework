@@ -44,12 +44,14 @@ class Kernel {
         'serve' => ServeCommand::class,
         'cache:clear' => CacheClearCommand::class,
         'migrasi' => MigrateCommand::class,
+        'db:seed' => \App\Commands\SeedCommand::class,
         'queue:work' => QueueWorkCommand::class,
         'test' => TestCommand::class,
         
         // Make commands
         'buat:controller' => MakeControllerCommand::class,
         'buat:model' => MakeModelCommand::class,
+        'buat:seeder' => \App\Commands\MakeSeederCommand::class,
         'buat:middleware' => MakeMiddlewareCommand::class,
         'buat:view' => MakeViewCommand::class,
         'buat:tabel' => MakeMigrationCommand::class,
