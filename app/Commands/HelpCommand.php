@@ -12,7 +12,7 @@ class HelpCommand extends Command {
         echo "\n";
         echo "\033[1;34mLayVX Framework\033[0m (By Henoch A Saerang) - CLI Tool\n";
         echo "--------------------------------------------------------\n";
-        echo "Penggunaan: php layvx/layvx <command> [opsi]\n\n";
+        echo "Penggunaan: layvx <command> [opsi]\n\n";
 
         echo "\033[1;33mAvailable Commands:\033[0m\n\n";
 
