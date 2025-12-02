@@ -55,6 +55,10 @@ class HelpCommand extends Command {
             'buat:pwa'       => 'Konfigurasi Mobile PWA (Manifest, Icon, Service Worker).',
         ]);
 
+        $this->printGroup('Deployment', [
+            'deploy:infinityfree' => 'Membangun aplikasi untuk deployment ke InfinityFree (Shared Hosting).',
+        ]);
+
         $this->printGroup('General & Testing', [
             'serve'          => 'Menjalankan server development PHP.',
             'test'           => 'Menjalankan unit testing aplikasi.',

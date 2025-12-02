@@ -34,7 +34,7 @@ class Kernel {
 
     /** The application's route middleware groups. */
     protected $routeMiddleware = [
-        //
+        // Contoh: 'auth' => \App\Middleware\Authenticate::class,
     ];
 
     /** The registered console commands. */
