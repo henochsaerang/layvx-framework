@@ -12,7 +12,7 @@ class HelpCommand extends Command {
         echo "\n";
         echo "\033[1;34mLayVX Framework\033[0m (By Henoch A Saerang) - CLI Tool\n";
         echo "--------------------------------------------------------\n";
-        echo "Penggunaan: php layvx/layvx <command> [opsi]\n\n";
+        echo "Penggunaan: layvx <command> [opsi]\n\n";
 
         echo "\033[1;33mAvailable Commands:\033[0m\n\n";
 
@@ -42,6 +42,8 @@ class HelpCommand extends Command {
 
         $this->printGroup('Database & Queue', [
             'migrasi'                => 'Menjalankan migrasi database.',
+            'db:seed [class]'        => 'Menjalankan seeder (default: DatabaseSeeder).',
+            'buat:seeder <Nama>'     => 'Membuat file Seeder baru.',
             'buat:tabel <nama>'      => 'Membuat migrasi tabel baru.',
             'buat:sql'               => 'Backup database ke file SQL.',
             'buat:jobs'              => 'Membuat tabel jobs untuk antrean (Queue).',
@@ -53,6 +55,10 @@ class HelpCommand extends Command {
             'buat:exe'       => 'Build aplikasi menjadi Desktop App portable.',
             'buat:hapus_exe' => 'Menghapus hasil build desktop.',
             'buat:pwa'       => 'Konfigurasi Mobile PWA (Manifest, Icon, Service Worker).',
+        ]);
+
+        $this->printGroup('Deployment', [
+            'deploy:infinityfree' => 'Membangun aplikasi untuk deployment ke InfinityFree (Shared Hosting).',
         ]);
 
         $this->printGroup('General & Testing', [

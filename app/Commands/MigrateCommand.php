@@ -44,9 +44,9 @@ class MigrateCommand extends Command
         $config = config('database');
         $driver = $config['driver'];
         $host = $config['host'];
-        $dbName = $config['database'];
-        $user = $config['username'];
-        $pass = $config['password'];
+        $dbName = $config['db_name'];
+        $user = $config['db_user'];
+        $pass = $config['db_pass'];
 
         if ($driver !== 'mysql') {
             // Saat ini, hanya mysql yang didukung untuk pembuatan otomatis
@@ -59,7 +59,7 @@ class MigrateCommand extends Command
             $tempPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             // Buat database jika belum ada
-            $tempPdo->exec("CREATE DATABASE IF NOT EXISTS \`$dbName\`");
+            $tempPdo->exec("CREATE DATABASE IF NOT EXISTS `$dbName`");
 
             echo "Database '$dbName' siap.\n";
         } catch (\PDOException $e) {
