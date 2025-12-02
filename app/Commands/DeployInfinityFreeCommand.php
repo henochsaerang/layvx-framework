@@ -59,7 +59,10 @@ class DeployInfinityFreeCommand extends Command
         echo "Creating '.env' template file..." . "\n";
         $this->createEnvTemplate($htdocsDir);
 
-        // 8. Create instruction file
+        // 8. Dump database (Pindahkan ke atas agar file SQL masuk ke build folder sebelum instruksi dibuat jika ingin disertakan infonya, tapi urutan ini juga OK)
+        $this->dumpDatabase($buildDir);
+
+        // 9. Create instruction file
         echo "Creating instruction file 'BACA_SAYA.txt'..." . "\n";
         $this->createInstructionFile($buildDir);
 
@@ -78,14 +81,15 @@ class DeployInfinityFreeCommand extends Command
         $content = file_get_contents($filePath);
         $originalContent = $content;
 
-        echo "--- Starting aggressive patching of index.php ---\n";
+        echo "--- Starting aggressive patching of index.php ---" . "\n";
 
         // Define replacements as per user request
+        // Urutan penting: string yang lebih panjang/spesifik sebaiknya di atas
         $replacements = [
+            "\App\Core\Env::load(__DIR__ . '/..');" => "\App\Core\Env::load(__DIR__);",
             "../app" => "app",
             "../config" => "config",
             "../routes" => "routes",
-            "\App\Core\Env::load(__DIR__ . '/..');" => "\App\Core\Env::load(__DIR__);",
         ];
 
         foreach ($replacements as $old => $new) {
@@ -97,9 +101,9 @@ class DeployInfinityFreeCommand extends Command
 
         if ($originalContent !== $content) {
             file_put_contents($filePath, $content);
-            echo "--- Finished patching index.php. File was modified and saved. ---\n";
+            echo "--- Finished patching index.php. File was modified and saved. ---" . "\n";
         } else {
-            echo "--- No changes were needed for index.php. ---\n";
+            echo "--- No changes were needed for index.php. ---" . "\n";
         }
     }
 
@@ -180,7 +184,7 @@ Ikuti langkah-langkah berikut untuk men-deploy aplikasi Anda ke InfinityFree:
 5. Import Database (Jika Diperlukan):
    - Buka 'phpMyAdmin' dari Control Panel.
    - Pilih database Anda.
-   - Gunakan tab 'Import' untuk mengupload file SQL dari database lokal Anda.
+   - Gunakan tab 'Import' untuk mengupload file SQL dari database lokal Anda yang juga sudah ada di folder build ini (berekstensi .sql).
 
 6. Selesai!
    - Kunjungi website Anda untuk melihat apakah sudah berjalan. Jika ada error '500', kemungkinan besar ada kesalahan pada konfigurasi '.env'.
@@ -195,7 +199,7 @@ Ikuti langkah-langkah berikut untuk men-deploy aplikasi Anda ke InfinityFree:
    
    - BENAR (Path Hosting): 
      Gunakan 'DOCUMENT_ROOT' agar selalu mengarah ke folder htdocs yang benar.
-     \$targetDir = {$docRoot} . '/uploads/';
+     \$targetDir = \$_SERVER['DOCUMENT_ROOT'] . '/uploads/';
    
    Hal ini karena di struktur InfinityFree ini, isi folder 'public' telah dikeluarkan ke root 'htdocs', sehingga folder 'public' secara fisik tidak ada lagi di path tersebut.
 
@@ -203,6 +207,46 @@ Terima kasih telah menggunakan LayVX Framework!
 TXT;
 
         file_put_contents($buildDir . '/BACA_SAYA.txt', $content);
+    }
+
+    private function dumpDatabase(string $buildDir)
+    {
+        echo "Dumping database..." . "\n";
+
+        $host = $_ENV['DB_HOST'] ?? '127.0.0.1';
+        $user = $_ENV['DB_USERNAME'] ?? 'root';
+        $pass = $_ENV['DB_PASSWORD'] ?? '';
+        $dbName = $_ENV['DB_DATABASE'] ?? null;
+
+        if (!$dbName) {
+            echo "\033[31mError: DB_DATABASE not set in .env. Skipping database dump.\033[0m" . "\n";
+            return;
+        }
+
+        $outputPath = $buildDir . '/' . $dbName . '.sql';
+
+        // Use MYSQL_PWD to avoid password on command line
+        putenv('MYSQL_PWD=' . $pass);
+
+        $command = sprintf(
+            'mysqldump -h %s -u %s %s > %s',
+            escapeshellarg($host),
+            escapeshellarg($user),
+            escapeshellarg($dbName),
+            escapeshellarg($outputPath)
+        );
+
+        exec($command, $output, $return_var);
+
+        // Unset the environment variable
+        putenv('MYSQL_PWD=');
+
+        if ($return_var !== 0) {
+            echo "\033[31mError: Failed to dump database. Is 'mysqldump' in your system's PATH?\033[0m" . "\n";
+            echo "\033[33mNote: If you are on Windows, add your MySQL bin directory (e.g., C:\xampp\mysql\bin) to your System PATH environment variable.\033[0m" . "\n";
+        } else {
+            echo "\033[32mDatabase dumped successfully to '{$outputPath}'.\033[0m" . "\n";
+        }
     }
 
     private function copyDirectory(string $source, string $destination)
