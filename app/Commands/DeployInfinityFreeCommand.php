@@ -93,6 +93,16 @@ class DeployInfinityFreeCommand extends Command
             "require_once __DIR__ . '/app/Core/autoloader.php';",
             $content
         );
+        $content = str_replace(
+            "require __DIR__ . '/../config/app.php';",
+            "require __DIR__ . '/config/app.php';",
+            $content
+        );
+        $content = str_replace(
+            "\\App\\Core\\Route::load('../routes/web.php');",
+            "\\App\\Core\\Route::load(__DIR__ . '/routes/web.php');",
+            $content
+        );
          $content = str_replace(
             "require_once '../routes/web.php';",
             "require_once __DIR__ . '/routes/web.php';",
