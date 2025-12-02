@@ -76,40 +76,31 @@ class DeployInfinityFreeCommand extends Command
         }
 
         $content = file_get_contents($filePath);
+        $originalContent = $content;
 
-        // Replace paths
-        $content = str_replace(
-            "require_once '../app/Core/Env.php';",
-            "require_once __DIR__ . '/app/Core/Env.php';",
-            $content
-        );
-        $content = str_replace(
-            "\App\Core\Env::load(__DIR__ . '/..');",
-            "\App\Core\Env::load(__DIR__);",
-            $content
-        );
-        $content = str_replace(
-            "require_once '../app/Core/autoloader.php';",
-            "require_once __DIR__ . '/app/Core/autoloader.php';",
-            $content
-        );
-        $content = str_replace(
-            "require __DIR__ . '/../config/app.php';",
-            "require __DIR__ . '/config/app.php';",
-            $content
-        );
-        $content = str_replace(
-            "\\App\\Core\\Route::load('../routes/web.php');",
-            "\\App\\Core\\Route::load(__DIR__ . '/routes/web.php');",
-            $content
-        );
-         $content = str_replace(
-            "require_once '../routes/web.php';",
-            "require_once __DIR__ . '/routes/web.php';",
-            $content
-        );
+        echo "--- Starting aggressive patching of index.php ---\n";
 
-        file_put_contents($filePath, $content);
+        // Define replacements as per user request
+        $replacements = [
+            "../app" => "app",
+            "../config" => "config",
+            "../routes" => "routes",
+            "\App\Core\Env::load(__DIR__ . '/..');" => "\App\Core\Env::load(__DIR__);",
+        ];
+
+        foreach ($replacements as $old => $new) {
+            $content = str_replace($old, $new, $content, $count);
+            if ($count > 0) {
+                echo "[OK] Replaced '{$old}' with '{$new}' ({$count} occurrences).\n";
+            }
+        }
+
+        if ($originalContent !== $content) {
+            file_put_contents($filePath, $content);
+            echo "--- Finished patching index.php. File was modified and saved. ---\n";
+        } else {
+            echo "--- No changes were needed for index.php. ---\n";
+        }
     }
 
     private function createHtaccess(string $htdocsDir)
