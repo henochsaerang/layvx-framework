@@ -185,6 +185,20 @@ Ikuti langkah-langkah berikut untuk men-deploy aplikasi Anda ke InfinityFree:
 6. Selesai!
    - Kunjungi website Anda untuk melihat apakah sudah berjalan. Jika ada error '500', kemungkinan besar ada kesalahan pada konfigurasi '.env'.
 
+7. CATATAN PENTING - UPLOAD GAMBAR/FILE:
+   Jika aplikasi Anda memiliki fitur upload (di Controller), path tujuan upload MUNGKIN perlu disesuaikan.
+   
+   - SALAH (Path Lama/Local): 
+     \$targetDir = "../public/uploads/";
+     // atau 
+     \$targetDir = __DIR__ . '/../../public/uploads/';
+   
+   - BENAR (Path Hosting): 
+     Gunakan 'DOCUMENT_ROOT' agar selalu mengarah ke folder htdocs yang benar.
+     \$targetDir = {$docRoot} . '/uploads/';
+   
+   Hal ini karena di struktur InfinityFree ini, isi folder 'public' telah dikeluarkan ke root 'htdocs', sehingga folder 'public' secara fisik tidak ada lagi di path tersebut.
+
 Terima kasih telah menggunakan LayVX Framework!
 TXT;
 
