@@ -14,7 +14,7 @@ class DeployInfinityFreeCommand extends Command
 
     public function handle(array $args = [])
     {
-        $this->info('Starting InfinityFree deployment build...');
+        echo 'Starting InfinityFree deployment build...' . "\n";
 
         $rootDir = dirname(__DIR__, 2);
         $buildDir = $rootDir . '/build_infinityfree';
@@ -22,24 +22,24 @@ class DeployInfinityFreeCommand extends Command
 
         // 1. Clean up previous build
         if (is_dir($buildDir)) {
-            $this->info("Cleaning up old build directory...");
+            echo "Cleaning up old build directory..." . "\n";
             $this->deleteDirectory($buildDir);
         }
 
         // 2. Create build directories
-        $this->info("Creating new build directory structure...");
+        echo "Creating new build directory structure..." . "\n";
         mkdir($buildDir, 0777, true);
         mkdir($htdocsDir, 0777, true);
 
         // 3. Copy required application folders
         $foldersToCopy = ['app', 'config', 'routes', 'views', 'layvx'];
         foreach ($foldersToCopy as $folder) {
-            $this->info("Copying '{$folder}' folder...");
+            echo "Copying '{$folder}' folder..." . "\n";
             $this->copyDirectory($rootDir . '/' . $folder, $htdocsDir . '/' . $folder);
         }
 
         // 4. Copy contents of the public folder
-        $this->info("Copying contents of 'public' folder...");
+        echo "Copying contents of 'public' folder..." . "\n";
         $this->copyDirectoryContents($rootDir . '/public', $htdocsDir);
         
         // Ensure the uploads directory exists
@@ -48,30 +48,30 @@ class DeployInfinityFreeCommand extends Command
         }
 
         // 5. Patch index.php for the new structure
-        $this->info("Patching 'index.php' for shared hosting...");
+        echo "Patching 'index.php' for shared hosting..." . "\n";
         $this->patchIndexPhp($htdocsDir . '/index.php');
 
         // 6. Create .htaccess for security and routing
-        $this->info("Creating '.htaccess' file...");
+        echo "Creating '.htaccess' file..." . "\n";
         $this->createHtaccess($htdocsDir);
 
         // 7. Create .env template
-        $this->info("Creating '.env' template file...");
+        echo "Creating '.env' template file..." . "\n";
         $this->createEnvTemplate($htdocsDir);
 
         // 8. Create instruction file
-        $this->info("Creating instruction file 'BACA_SAYA.txt'...");
+        echo "Creating instruction file 'BACA_SAYA.txt'..." . "\n";
         $this->createInstructionFile($buildDir);
 
-        $this->info("\nBuild complete!");
-        $this->info("All files are ready in the 'build_infinityfree' directory.", 'green');
-        $this->info("Please follow the instructions in 'build_infinityfree/BACA_SAYA.txt' to deploy.", 'yellow');
+        echo "\n" . 'Build complete!' . "\n";
+        echo "\033[32mAll files are ready in the 'build_infinityfree' directory.\033[0m" . "\n";
+        echo "\033[33mPlease follow the instructions in 'build_infinityfree/BACA_SAYA.txt' to deploy.\033[0m" . "\n";
     }
 
     private function patchIndexPhp(string $filePath)
     {
         if (!file_exists($filePath)) {
-            $this->error("Could not find index.php to patch.");
+            echo "Error: Could not find index.php to patch." . "\n";
             return;
         }
 

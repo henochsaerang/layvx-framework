@@ -34,7 +34,7 @@ class Kernel {
 
     /** The application's route middleware groups. */
     protected $routeMiddleware = [
-        // contoh: 'auth' => \App\Middleware\Authenticate::class,
+        // contoh: 'auth' => \App\Middleware\AuthMiddleware::class,
     ];
 
     /** The registered console commands. */
@@ -59,6 +59,7 @@ class Kernel {
         'buat:modul' => MakeModuleCommand::class,
         'buat:exe' => MakeExeCommand::class,
         'buat:pwa' => MakePwaCommand::class,
+        'deploy:infinityfree' => \App\Commands\DeployInfinityFreeCommand::class,
         
         // Dynamic Structure Scaffolding
         'buat:mvc' => MakeStructureCommand::class,
