@@ -34,7 +34,7 @@ class Kernel {
 
     /** The application's route middleware groups. */
     protected $routeMiddleware = [
-        // contoh: 'auth' => \App\Middleware\AuthMiddleware::class,
+        // Contoh: 'auth' => \App\Middleware\AuthMiddleware::class,
     ];
 
     /** The registered console commands. */
@@ -44,14 +44,12 @@ class Kernel {
         'serve' => ServeCommand::class,
         'cache:clear' => CacheClearCommand::class,
         'migrasi' => MigrateCommand::class,
-        'db:seed' => \App\Commands\SeedCommand::class,
         'queue:work' => QueueWorkCommand::class,
         'test' => TestCommand::class,
         
         // Make commands
         'buat:controller' => MakeControllerCommand::class,
         'buat:model' => MakeModelCommand::class,
-        'buat:seeder' => \App\Commands\MakeSeederCommand::class,
         'buat:middleware' => MakeMiddlewareCommand::class,
         'buat:view' => MakeViewCommand::class,
         'buat:tabel' => MakeMigrationCommand::class,
@@ -62,6 +60,7 @@ class Kernel {
         'buat:exe' => MakeExeCommand::class,
         'buat:pwa' => MakePwaCommand::class,
         'deploy:infinityfree' => \App\Commands\DeployInfinityFreeCommand::class,
+        'deploy:cpanel' => \App\Commands\DeployCpanelCommand::class,
         
         // Dynamic Structure Scaffolding
         'buat:mvc' => MakeStructureCommand::class,

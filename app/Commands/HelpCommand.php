@@ -42,8 +42,6 @@ class HelpCommand extends Command {
 
         $this->printGroup('Database & Queue', [
             'migrasi'                => 'Menjalankan migrasi database.',
-            'db:seed [class]'        => 'Menjalankan seeder (default: DatabaseSeeder).',
-            'buat:seeder <Nama>'     => 'Membuat file Seeder baru.',
             'buat:tabel <nama>'      => 'Membuat migrasi tabel baru.',
             'buat:sql'               => 'Backup database ke file SQL.',
             'buat:jobs'              => 'Membuat tabel jobs untuk antrean (Queue).',
@@ -59,6 +57,7 @@ class HelpCommand extends Command {
 
         $this->printGroup('Deployment', [
             'deploy:infinityfree' => 'Membangun aplikasi untuk deployment ke InfinityFree (Shared Hosting).',
+            'deploy:cpanel'       => 'Build aplikasi untuk deployment ke cPanel (Struktur Terpisah Aman).',
         ]);
 
         $this->printGroup('General & Testing', [
