@@ -34,8 +34,7 @@ class Kernel {
 
     /** The application's route middleware groups. */
     protected $routeMiddleware = [
-        'auth' => \App\Middleware\AuthMiddleware::class,
-        'guest' => \App\Middleware\GuestMiddleware::class,
+        // Contoh: 'auth' => \App\Middleware\AuthMiddleware::class,
     ];
 
     /** The registered console commands. */

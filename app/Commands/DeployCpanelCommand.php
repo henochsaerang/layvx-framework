@@ -9,9 +9,9 @@ class DeployCpanelCommand extends Command
     protected $signature = 'deploy:cpanel';
     protected $description = 'Build aplikasi untuk deployment ke cPanel (Struktur Terpisah Aman).';
 
-    public function handle()
+    public function handle(array $args = [])
     {
-        $this->info('Memulai proses build untuk cPanel...');
+        echo "Memulai proses build untuk cPanel...\n";
 
         $buildDir = 'build_cpanel';
         $rootHomeDir = $buildDir . '/1_upload_ke_ROOT_HOME';
@@ -20,26 +20,26 @@ class DeployCpanelCommand extends Command
         // 1. Persiapan folder build
         if (is_dir($buildDir)) {
             $this->deleteDirectory($buildDir);
-            $this->info("Folder '{$buildDir}' lama telah dibersihkan.");
+            echo "Folder '{$buildDir}' lama telah dibersihkan.\n";
         }
         mkdir($buildDir);
         mkdir($rootHomeDir, 0755, true);
         mkdir($publicHtmlDir, 0755, true);
-        $this->info("Folder build '{$buildDir}' dan sub-folder telah dibuat.");
+        echo "Folder build '{$buildDir}' dan sub-folder telah dibuat.\n";
 
         // 2. Copy folder inti
         $coreFolders = ['app', 'config', 'routes', 'views', 'layvx'];
         foreach ($coreFolders as $folder) {
             $this->recursiveCopy($folder, $rootHomeDir . '/' . $folder);
-            $this->info("Folder '{$folder}' telah disalin ke '{$rootHomeDir}'.");
+            echo "Folder '{$folder}' telah disalin ke '{$rootHomeDir}'.\n";
         }
 
         // Salin file .env
         if (file_exists('.env')) {
             copy('.env', $rootHomeDir . '/.env');
-            $this->info("File '.env' telah disalin.");
+            echo "File '.env' telah disalin.\n";
         } else {
-            $this->warning("File '.env' tidak ditemukan. Anda mungkin perlu membuat .env.example sebagai gantinya.");
+            echo "\033[33mWarning:\033[0m File '.env' tidak ditemukan. Anda mungkin perlu membuat .env.example sebagai gantinya.\n";
         }
 
         // 3. Copy folder public
@@ -55,16 +55,16 @@ class DeployCpanelCommand extends Command
                 copy($sourcePath, $destinationPath);
             }
         }
-        $this->info("Isi folder '{$publicSource}' telah disalin ke '{$publicHtmlDir}'.");
+        echo "Isi folder '{$publicSource}' telah disalin ke '{$publicHtmlDir}'.\n";
 
         // 4. Cek index.php (hanya konfirmasi)
         $indexPath = $publicHtmlDir . '/index.php';
         if (file_exists($indexPath)) {
             $indexContent = file_get_contents($indexPath);
-            if (strpos($indexContent, "'/../app/Core/autoloader.php'") !== false) {
-                $this->info("Path di '{$indexPath}' sudah benar (../app). Tidak ada perubahan diperlukan.");
+            if (strpos($indexContent, "../app/Core/autoloader.php") !== false) {
+                echo "Path di '{$indexPath}' sudah benar (../app). Tidak ada perubahan diperlukan.\n";
             } else {
-                $this->warning("Path di '{$indexPath}' mungkin perlu diperiksa manual. Pastikan me-load '../app/Core/autoloader.php'.");
+                echo "\033[33mWarning:\033[0m Path di '{$indexPath}' mungkin perlu diperiksa manual. Pastikan me-load '../app/Core/autoloader.php'.\n";
             }
         }
 
@@ -96,9 +96,9 @@ Ikuti langkah-langkah deployment berikut:
 Deployment Anda sekarang seharusnya sudah live.
 EOT;
         file_put_contents($buildDir . '/BACA_SAYA.txt', $instructions);
-        $this->info("File instruksi 'BACA_SAYA.txt' telah dibuat.");
+        echo "File instruksi 'BACA_SAYA.txt' telah dibuat.\n";
 
-        $this->success("Build untuk cPanel berhasil dibuat di folder '{$buildDir}'.");
+        echo "\033[32mBuild untuk cPanel berhasil dibuat di folder '{$buildDir}'.\033[0m\n";
     }
 
     private function recursiveCopy($source, $destination)
